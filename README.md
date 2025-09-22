@@ -1,2 +1,2 @@
 # Mini-project
-Third year mini project
+An AI-powered flashcards and quiz generator
