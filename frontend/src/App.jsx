@@ -12,8 +12,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Public landing page */}
           <Route path="/" element={<LandingPage />} />
 
+          {/* Auth pages - only accessible if NOT logged in */}
           <Route
             path="/signup"
             element={
@@ -31,6 +33,7 @@ function App() {
             }
           />
 
+          {/* Dashboard - only accessible if logged in */}
           <Route
             path="/dashboard"
             element={
