@@ -210,16 +210,14 @@ const LandingPage = () => {
 {/*Contact section */}
 <section id="contact-us" className="py-10">
 <div className="max-w-7xl mx-auto px-6 text-left">
-  <p className="text-lime-900 font-bold mb-8"> Contact Us Here</p> 
+  <p className="text-lime-900 font-bold mb-8"> Contact</p> 
   <h3 className="font-semibold text-lg mb-2">Email</h3>
   <div className="mb-8">
       <p className="text-gray-500">akwasipoku.oforiagyei@gmail.com</p>
-      <p className="text-gray-500">dzorsahpalmer2080@gmail.com</p>
   </div>
   <h3 className="font-semibold mb-2">Github</h3>
   <div className="flex flex-col">
     <a href="https://github.com/apoa5" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">apoa5</a>
-    <a href="" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">palmer</a>
   </div>
 </div>
 
