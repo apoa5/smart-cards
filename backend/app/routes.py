@@ -4,6 +4,11 @@ from app.ai import generate_flashcards, generate_quiz_questions
 
 main = Blueprint("main", __name__)
 
+
+@main.route("/api/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
 @main.route("/api/upload", methods=["POST"])
 def upload_file():
     uploaded_file = request.files.get("file")
@@ -52,5 +57,4 @@ def quiz_route():
 
     quiz = generate_quiz_questions(text, count=count)
     return jsonify({"quiz": quiz})
-
 

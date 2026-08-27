@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import axios from "axios";
+import { api } from "../api";
 import FlashcardList from "./FlashcardList";
 import QuizList from "./QuizList";
 import { CloudArrowUpIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -29,8 +29,8 @@ const FileUploader = ({ onTextExtracted }) => {
   formData.append("file", file);
 
   try {
-    const response = await axios.post(
-      "http://localhost:5000/api/upload",
+    const response = await api.post(
+      "/api/upload",
       formData,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -60,8 +60,8 @@ const FileUploader = ({ onTextExtracted }) => {
   const requestFlashcards = async (count) => {
     setLoadingFlashcards(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/generate_flashcards",
+      const response = await api.post(
+        "/api/generate_flashcards",
         { text: preprocessedText, count }
       );
       setFlashcards(response.data.flashcards || []);
@@ -75,8 +75,8 @@ const FileUploader = ({ onTextExtracted }) => {
   const requestQuiz = async (count) => {
     setLoadingQuiz(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/generate_quiz",
+      const response = await api.post(
+        "/api/generate_quiz",
         { text: preprocessedText, count }
       );
       setQuiz(response.data.quiz || []);
