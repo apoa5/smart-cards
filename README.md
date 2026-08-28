@@ -20,7 +20,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 | API client | Axios |
 | Authentication | Supabase Auth |
 | Backend | Python, Flask, Flask-CORS |
-| AI | OpenAI API |
+| AI | OpenAI API using `gpt-3.5-turbo` |
 | Document parsing | PyPDF2, python-docx, python-pptx |
 | Deployment | Vercel |
 
@@ -30,7 +30,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 2. The user uploads a document from the protected dashboard.
 3. The Flask API extracts readable text and returns a preview and word count.
 4. The user selects a content type and item count.
-5. The backend sends the extracted text to OpenAI and returns structured JSON.
+5. The backend sends the extracted text to OpenAI's `gpt-3.5-turbo` model and returns structured JSON.
 6. React renders the generated flashcards or interactive quiz in the browser.
 
 The browser communicates with Supabase directly for authentication. Study documents and generation requests are sent to the Flask API; the OpenAI API key remains on the server.
@@ -156,5 +156,6 @@ Deploy the repository as two Vercel projects:
 
 - Only extractable text is used; scanned PDFs require OCR before upload.
 - Extraction is capped at 2,000 words to keep generation requests manageable.
+- Both flashcards and quiz questions are generated with `gpt-3.5-turbo`.
 - AI-generated study material can contain mistakes. Verify important facts against the source.
 - Keep `OPENAI_API_KEY` on the backend. Never expose it through a `VITE_` variable.

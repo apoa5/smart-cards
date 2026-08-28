@@ -1,6 +1,6 @@
 # SmartCards frontend
 
-The SmartCards frontend is a React single-page application for authentication, document upload, and displaying AI-generated flashcards and quizzes. It uses Supabase for user sessions and communicates with the separate Flask backend through Axios.
+The SmartCards frontend is a React single-page application for authentication, document upload, and displaying flashcards and quizzes generated with OpenAI's `gpt-3.5-turbo` model. It uses Supabase for user sessions and communicates with the separate Flask backend through Axios.
 
 For full-stack setup and deployment instructions, see the [project README](../README.md).
 
@@ -111,7 +111,7 @@ The configured Axios client sends requests to `VITE_API_BASE_URL`:
 - `POST /api/generate_flashcards` sends extracted text and the requested item count.
 - `POST /api/generate_quiz` sends extracted text and the requested item count.
 
-Accepted upload formats are TXT, PDF, DOCX, and PPTX. The backend performs extraction and AI generation; the frontend does not call OpenAI directly.
+Accepted upload formats are TXT, PDF, DOCX, and PPTX. The backend extracts the text and uses `gpt-3.5-turbo` to generate both flashcards and quiz questions; the frontend does not call OpenAI directly.
 
 ## Scripts
 
