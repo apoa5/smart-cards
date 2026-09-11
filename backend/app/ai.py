@@ -5,7 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 def generate_flashcards(text, count=5):
     prompt = f"""
@@ -20,6 +20,8 @@ def generate_flashcards(text, count=5):
     """
 
     try:
+        # A missing key must not prevent uploads or CORS initialization.
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=40.0, max_retries=0)
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -60,6 +62,8 @@ def generate_quiz_questions(text, count=5):
     """
 
     try:
+        # A missing key must not prevent uploads or CORS initialization.
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=40.0, max_retries=0)
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[

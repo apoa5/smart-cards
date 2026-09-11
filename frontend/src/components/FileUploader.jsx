@@ -7,6 +7,7 @@ import { CloudArrowUpIcon, TrashIcon } from "@heroicons/react/24/outline";
 const FileUploader = ({ onTextExtracted }) => {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingFlashcards, setLoadingFlashcards] = useState(false);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
@@ -19,45 +20,50 @@ const FileUploader = ({ onTextExtracted }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "flashcards" or "quiz"
 
+  const errorMessage = (err, fallback) => {
+    if (err.response?.status === 413) return "File too large. Upload a file of 4 MB or less.";
+    if (err.response?.data?.error) return err.response.data.error;
+    if (!err.response) return "Could not reach the server. Check your connection and try again. If this persists, check the backend deployment and allowed frontend origin.";
+    return fallback;
+  };
+
   const handleFileChange = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  setLoading(true);
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const response = await api.post(
-      "/api/upload",
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
-
-    const previewText = response.data.preview;
-    setPreprocessedText(previewText);
-    setWordCount(response.data.word_count);
-    setSelectedFile(file); // ✅ Move here — only after success
-
-    onTextExtracted?.(previewText);
-  } catch (err) {
-    console.error("Upload failed:", err);
-
-    if (err.response && err.response.data && err.response.data.error) {
-      alert(err.response.data.error);
-    } else {
-      alert("Failed to upload or extract file.");
+    const file = event.target.files[0];
+    if (!file) return;
+    handleDeleteFile();
+    setError("");
+    if (/\.(ppt|doc)$/i.test(file.name)) {
+      setError("Please save legacy .ppt or .doc files as .pptx or .docx before uploading.");
+      return;
     }
-    setSelectedFile(null); // ✅ Make sure no file shows on failure
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+    if (!/\.(txt|pdf|docx|pptx)$/i.test(file.name)) {
+      setError("Please choose a TXT, PDF, DOCX, or PPTX file.");
+      return;
+    }
+    if (file.size > 4_000_000) {
+      setError("File too large. Upload a file of 4 MB or less. Compress the document or split it into smaller files.");
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await api.post("/api/upload", formData);
+      const previewText = response.data.preview;
+      setPreprocessedText(previewText);
+      setWordCount(response.data.word_count);
+      setSelectedFile(file);
+      onTextExtracted?.(previewText);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setError(errorMessage(err, "Failed to upload or extract file."));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const requestFlashcards = async (count) => {
+    setError("");
     setLoadingFlashcards(true);
     try {
       const response = await api.post(
@@ -67,12 +73,14 @@ const FileUploader = ({ onTextExtracted }) => {
       setFlashcards(response.data.flashcards || []);
     } catch (err) {
       console.error("Flashcard generation failed:", err);
+      setError(errorMessage(err, "Generation failed. Please try again."));
     } finally {
       setLoadingFlashcards(false);
     }
   };
 
   const requestQuiz = async (count) => {
+    setError("");
     setLoadingQuiz(true);
     try {
       const response = await api.post(
@@ -82,6 +90,7 @@ const FileUploader = ({ onTextExtracted }) => {
       setQuiz(response.data.quiz || []);
     } catch (err) {
       console.error("Quiz generation failed:", err);
+      setError(errorMessage(err, "Generation failed. Please try again."));
     } finally {
       setLoadingQuiz(false);
     }
@@ -117,22 +126,26 @@ const FileUploader = ({ onTextExtracted }) => {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt,.pdf,.docx,.ppt,.pptx"
+          accept=".txt,.pdf,.docx,.pptx"
           className="hidden"
           onChange={handleFileChange}
         />
 
         <button
+          disabled={loading || loadingFlashcards || loadingQuiz}
           onClick={() => fileInputRef.current?.click()}
           className="px-8 py-3 rounded-full bg-gray-700 text-white hover:bg-gray-900 cursor-pointer transition"
         >
           {loading ? "Uploading..." : "Choose File"}
         </button>
 
+        <p className="mt-3 text-sm text-gray-600">TXT, PDF, DOCX, or PPTX · Maximum 4 MB</p>
+        {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
+
         {selectedFile && !loading && (
           <>
             <p className="mt-3 text-lime-900 text-m">
-              📄 {selectedFile.name} uploaded
+              📄 {selectedFile.name} uploaded ({wordCount} words)
             </p>
             <div className="mt-4 flex justify-center gap-4 items-center">
               <button

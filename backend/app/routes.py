@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from app.utils.utils import extract_text_from_file
 from app.ai import generate_flashcards, generate_quiz_questions
 
@@ -23,7 +23,20 @@ def upload_file():
             "error": "Files in .doc or .ppt format are not supported. Please upload as .docx or .pptx instead."
         }), 400
 
-    processed_text = extract_text_from_file(uploaded_file)
+    if not filename.endswith((".txt", ".pdf", ".docx", ".pptx")):
+        return jsonify({"error": "Please upload a TXT, PDF, DOCX, or PPTX file."}), 400
+
+    uploaded_file.seek(0, 2)
+    file_size = uploaded_file.tell()
+    uploaded_file.seek(0)
+    if file_size > 4_000_000:
+        return jsonify({"error": "File too large. Upload a file of 4 MB or less."}), 413
+
+    try:
+        processed_text = extract_text_from_file(uploaded_file)
+    except Exception:
+        current_app.logger.exception("Document extraction failed")
+        return jsonify({"error": "Could not read this document. Check that it is valid and not password protected."}), 400
 
     if not processed_text:
         return jsonify({"error": "Could not extract text"}), 400
@@ -44,6 +57,8 @@ def flashcard_route():
         return jsonify({"error": "No text provided"}), 400
 
     flashcards = generate_flashcards(text, count=count)
+    if not flashcards:
+        return jsonify({"error": "Generation failed. Please try again. If this persists, check the server API key and provider quota."}), 502
     return jsonify({"flashcards": flashcards})
 
 @main.route("/api/generate_quiz", methods=["POST"])
@@ -56,5 +71,7 @@ def quiz_route():
         return jsonify({"error": "No text provided"}), 400
 
     quiz = generate_quiz_questions(text, count=count)
+    if not quiz:
+        return jsonify({"error": "Generation failed. Please try again. If this persists, check the server API key and provider quota."}), 502
     return jsonify({"quiz": quiz})
 

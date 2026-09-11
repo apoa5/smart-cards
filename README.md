@@ -159,3 +159,28 @@ Deploy the repository as two Vercel projects:
 - Both flashcards and quiz questions are generated with `gpt-3.5-turbo`.
 - AI-generated study material can contain mistakes. Verify important facts against the source.
 - Keep `OPENAI_API_KEY` on the backend. Never expose it through a `VITE_` variable.
+
+### Upload and CORS troubleshooting
+
+For the current production domains, set these Vercel environment variables:
+
+- Backend: `CORS_ORIGINS=https://smart-cards-olive.vercel.app`
+- Frontend: `VITE_API_BASE_URL=https://smart-cards-kvoz.vercel.app`
+- Backend: a valid `OPENAI_API_KEY` with available provider quota.
+
+Redeploy both projects after changing environment variables. An explicit
+`CORS_ORIGINS` replaces the defaults; include every frontend origin you use.
+
+Uploads are limited to 4,000,000 bytes (4 MB), leaving multipart overhead below
+[Vercel's 4.5 MB request limit](https://vercel.com/docs/functions/limitations).
+Vercel can reject oversized requests before Flask runs, so those responses may
+appear as CORS or Axios network errors. Increasing Flask's limit cannot bypass
+Vercel's limit. Compress or split larger documents; supporting larger originals
+requires direct uploads to object storage and backend retrieval, or hosting the
+API on a service that accepts larger requests. Legacy `.ppt` files must first
+be saved as `.pptx`.
+
+Generation uses `/api/generate_flashcards` and `/api/generate_quiz`, not
+`/api/upload`. If the console reports `/api/upload`, inspect that request in the
+Network panel separately. For failures on small requests, check the backend
+function logs for startup failures, provider errors, or platform timeouts.
