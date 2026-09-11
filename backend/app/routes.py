@@ -1,8 +1,13 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.utils.utils import extract_text_from_file
-from app.ai import generate_flashcards, generate_quiz_questions
+from app.ai import GenerationError, generate_flashcards, generate_quiz_questions
 
 main = Blueprint("main", __name__)
+
+
+@main.errorhandler(GenerationError)
+def handle_generation_error(error):
+    return jsonify({"error": str(error), "code": error.code}), error.status
 
 
 @main.route("/api/health", methods=["GET"])

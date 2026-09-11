@@ -1,10 +1,50 @@
 import os
 import re
 import json
+import logging
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class GenerationError(Exception):
+    def __init__(self, code, message, status=502):
+        super().__init__(message)
+        self.code = code
+        self.status = status
+
+
+def generation_error(error):
+    status = getattr(error, "status_code", None)
+    code = getattr(error, "code", None)
+    # Log diagnostic identifiers, never document content or API credentials.
+    logging.getLogger(__name__).warning(
+        "Generation failed: type=%s status=%s code=%s",
+        type(error).__name__, status, code,
+    )
+    if isinstance(error, GenerationError):
+        return error
+    if status == 401:
+        return GenerationError("invalid_api_key", "The server's OpenAI API key is invalid. Update OPENAI_API_KEY in the backend deployment.")
+    if code == "insufficient_quota":
+        return GenerationError("insufficient_quota", "The OpenAI project has insufficient API quota. Check its billing and usage limits.")
+    if status == 429:
+        return GenerationError("rate_limited", "The AI service is busy. Please wait a moment and try again.", 429)
+    if status in (403, 404):
+        return GenerationError("model_access", "The server cannot access the configured AI model. Check the API project's model permissions.")
+    if type(error).__name__ == "APITimeoutError":
+        return GenerationError("ai_timeout", "AI generation timed out. Please try again with fewer items.", 504)
+    if isinstance(error, (json.JSONDecodeError, ValueError)):
+        return GenerationError("invalid_ai_response", "The AI returned an incomplete or invalid response. Try again with fewer items.")
+    return GenerationError("ai_unavailable", "The AI service could not complete generation. Please try again.")
+
+
+def create_client():
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not key:
+        raise GenerationError("missing_api_key", "OPENAI_API_KEY is missing from the backend deployment. Configure it and redeploy.")
+    return OpenAI(api_key=key, timeout=40.0, max_retries=0)
 
 
 def generate_flashcards(text, count=5):
@@ -21,7 +61,7 @@ def generate_flashcards(text, count=5):
 
     try:
         # A missing key must not prevent uploads or CORS initialization.
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=40.0, max_retries=0)
+        client = create_client()
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -32,8 +72,9 @@ def generate_flashcards(text, count=5):
             max_tokens=1000
         )
 
-        content = response.choices[0].message.content.strip()
-        print("Raw OpenAI response (flashcards):", content)
+        if response.choices[0].finish_reason == "length":
+            raise ValueError("Truncated AI response")
+        content = (response.choices[0].message.content or "").strip()
 
         # Clean up markdown formatting if present
         if content.startswith("```"):
@@ -43,8 +84,7 @@ def generate_flashcards(text, count=5):
         return flashcards
 
     except Exception as e:
-        print("OpenAI error (flashcards):", e)
-        return []
+        raise generation_error(e) from e
 
 
 def generate_quiz_questions(text, count=5):
@@ -63,7 +103,7 @@ def generate_quiz_questions(text, count=5):
 
     try:
         # A missing key must not prevent uploads or CORS initialization.
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), timeout=40.0, max_retries=0)
+        client = create_client()
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -74,8 +114,9 @@ def generate_quiz_questions(text, count=5):
             max_tokens=1000
         )
 
-        content = response.choices[0].message.content.strip()
-        print("Raw OpenAI response (quiz):", content)
+        if response.choices[0].finish_reason == "length":
+            raise ValueError("Truncated AI response")
+        content = (response.choices[0].message.content or "").strip()
 
         if content.startswith("```"):
             content = re.sub(r"^```json\s*|\s*```$", "", content, flags=re.IGNORECASE).strip()
@@ -84,5 +125,4 @@ def generate_quiz_questions(text, count=5):
         return quiz
 
     except Exception as e:
-        print("OpenAI error (quiz):", e)
-        return []
+        raise generation_error(e) from e
