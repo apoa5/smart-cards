@@ -134,3 +134,14 @@ npm run build
 Create a Vercel project with `frontend` as its Root Directory and add all three environment variables listed above. Set `VITE_API_BASE_URL` to the deployed backend, then deploy.
 
 The included `vercel.json` rewrites requests to `index.html`, allowing React Router pages such as `/login` and `/dashboard` to load correctly after a refresh.
+
+## Automated tests
+
+From `frontend/`, install the locked dependencies with `npm ci` and run
+`npm test`. Vitest runs the React Testing Library suites in jsdom. The tests
+exercise the real routing, session guards, upload controls, and study
+renderers with mocked Supabase and Axios modules. They run without
+credentials or network services after dependency installation.
+
+See the [regression test notes](../docs/refactor/TESTING.md) for backend
+commands and known baseline issues.
