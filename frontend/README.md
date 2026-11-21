@@ -1,6 +1,6 @@
 # SmartCards frontend
 
-The SmartCards frontend is a React single-page application for document upload, and displaying flashcards and quizzes generated with OpenAI's `gpt-3.5-turbo` model. It communicates with the separate Flask backend through Axios.
+The SmartCards frontend is a React single-page application for uploading documents and displaying generated flashcards and quizzes. It communicates with the separate Flask backend through Axios.
 
 For full-stack setup and deployment instructions, see the [project README](../README.md).
 
@@ -58,7 +58,7 @@ The app is available at `http://localhost:5173` by default. The backend must all
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | No | Flask API URL; defaults to `http://localhost:5000` |
 
-Vite embeds variables prefixed with `VITE_` in the browser bundle. Never store an OpenAI API key in this file.
+Vite embeds variables prefixed with `VITE_` in the browser bundle. Keep inference provider keys in the backend environment.
 
 ## Application structure
 
@@ -93,7 +93,7 @@ The configured Axios client sends requests to `VITE_API_BASE_URL`:
 - `POST /api/generate_flashcards` sends extracted text and the requested item count.
 - `POST /api/generate_quiz` sends extracted text and the requested item count.
 
-Accepted upload formats are TXT, PDF, DOCX, and PPTX. The backend extracts the text and uses `gpt-3.5-turbo` to generate both flashcards and quiz questions; the frontend does not call OpenAI directly.
+Accepted upload formats are TXT, PDF, DOCX, and PPTX. The backend extracts the text and generates flashcards and quiz questions through its configured inference provider.
 
 ## Scripts
 

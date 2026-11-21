@@ -29,7 +29,10 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
   and 15 counts, success envelopes, malformed requests, and provider failures.
   Tests inject fake providers or replace the legacy OpenAI client factory or
   the route's generation function. Factory tests cover legacy compatibility
-  and rejection of the reserved hosted selector.
+  and Groq selection. Groq API tests use an in-memory HTTP transport to inspect
+  requests, validate both response types, and check sanitized errors with zero
+  retries or fallback. The separate live smoke command is documented in the
+  [README](../../README.md#inference-configuration).
 - Standalone validators cover exact counts, item fields and types, blank values,
   duplicate questions and options, and quiz answer matching. Mocked OpenAI
   completions exercise JSON fences, malformed and truncated output, and the

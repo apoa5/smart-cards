@@ -6,7 +6,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 
 - Extracts and cleans text from TXT, PDF, DOCX, and PPTX files
 - Limits extracted content to 2,000 words before generation
-- Generates question-and-answer flashcards with OpenAI
+- Generates question-and-answer flashcards with the configured inference provider
 - Generates multiple-choice quizzes with immediate answer feedback
 - Supports separate frontend and backend deployments on Vercel
 
@@ -17,7 +17,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 | Frontend | React 19, Vite, React Router, Tailwind CSS |
 | API client | Axios |
 | Backend | Python, Flask, Flask-CORS |
-| AI | Provider interface with a legacy OpenAI adapter |
+| AI | Opt-in Groq inference and legacy OpenAI compatibility |
 | Document parsing | PyPDF2, python-docx, python-pptx |
 | Deployment | Vercel |
 
@@ -29,7 +29,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 4. The backend sends the extracted text to the configured provider, validates the output, and returns structured JSON.
 5. React renders the generated flashcards or interactive quiz in the browser.
 
-The browser sends study documents and generation requests to Flask. The OpenAI API key remains on the server.
+The browser sends study documents and generation requests to Flask. Provider credentials remain on the server.
 
 ## Project structure
 
@@ -44,7 +44,7 @@ The browser sends study documents and generation requests to Flask. The OpenAI A
 └── backend/                # Flask API
     ├── api/index.py        # Vercel serverless entry point
     ├── app/
-    │   ├── ai.py           # OpenAI generation logic
+    │   ├── ai.py           # Provider-independent generation
     │   ├── routes.py       # API endpoints
     │   └── utils/          # Text extraction and preprocessing
     └── run.py              # Local development entry point
@@ -56,7 +56,7 @@ The browser sends study documents and generation requests to Flask. The OpenAI A
 
 - Node.js 20.19+ or 22.12+ and npm
 - Python 3.10 or later
-- Optional legacy OpenAI credentials for existing integrations that already use them. Offline tests require no credentials.
+- Provider credentials for live generation. Offline tests require no credentials.
 
 ### 1. Start the backend
 
@@ -108,23 +108,51 @@ Open `http://localhost:5173`, select **Get started**, and upload a supported doc
 
 ### Inference configuration
 
-The backend separates prompts, provider calls, JSON decoding, and study item
-validation. Offline tests inject a fake provider or mock the legacy client.
+To try Groq locally, set these values in the backend environment.
 
-The only adapter in this step is **legacy OpenAI for compatibility**. An
-existing installation with `OPENAI_API_KEY` continues to use that adapter
-when `AI_PROVIDER` is unset. To select it explicitly, set
-`AI_PROVIDER=legacy_openai`. Its default model is `gpt-3.5-turbo` and
-`AI_MODEL` can override it. Without provider credentials, health checks and
-uploads remain available and generation returns HTTP 502. Legacy OpenAI is
-a transitional option, with no production provider selected for the migration.
+```env
+AI_PROVIDER=groq
+AI_MODEL=openai/gpt-oss-20b
+GROQ_API_KEY=your_groq_api_key
+```
 
-The planned hosted configuration is `AI_PROVIDER=openai_compatible` with
-server-side `AI_MODEL`, `AI_BASE_URL`, and `AI_API_KEY`. The hosted selector
-is currently unsupported and fails closed, even if a legacy key is present.
-No provider, including a hosted service such as Groq, is guaranteed free or
-available. Verify account-level quotas, model access, and pricing before
-selecting or enabling a provider.
+`AI_MODEL` defaults to `openai/gpt-oss-20b` for Groq. The adapter uses Groq's
+fixed OpenAI-compatible endpoint, a 30-second SDK timeout, a 4,096-token
+completion cap, and no automatic retries or fallback. Keep `GROQ_API_KEY`
+server-side. Groq generation requires no OpenAI API key. The existing prompts
+ask for JSON arrays in ordinary chat completions. The server parses and
+validates those arrays with the same rules as the legacy adapter. Groq's JSON
+Object Mode is for object responses, while the current prompts require arrays.
+[Groq API reference](https://console.groq.com/docs/api-reference),
+[OpenAI compatibility](https://console.groq.com/docs/openai),
+[structured outputs](https://console.groq.com/docs/structured-outputs).
+
+Groq lists `openai/gpt-oss-20b` and `openai/gpt-oss-120b`; the latter is an
+alternate candidate for later evaluation. The weights are Apache 2.0 licensed.
+Hosted model availability, pricing, and free-tier limits may change. Check
+your account's model access and quota before enabling inference. Extracted
+study text is sent to Groq when selected, so review its data controls before
+using private documents. [Groq models and pricing](https://console.groq.com/docs/models),
+[rate limits](https://console.groq.com/docs/rate-limits),
+[data controls](https://console.groq.com/docs/your-data),
+[gpt-oss licensing](https://openai.com/index/introducing-gpt-oss/).
+
+Existing installations can continue using `OPENAI_API_KEY` with
+`AI_PROVIDER=legacy_openai`, or with `AI_PROVIDER` unset. The legacy model
+defaults to `gpt-3.5-turbo`. Health and uploads work without inference
+credentials. Generation requires credentials for the selected provider.
+
+To authorize one live Groq request with synthetic text, configure the backend
+environment above and run one of these commands from `backend/`. Each command
+requests five items and may consume account quota. The smoke test prints a
+validated item count or a sanitized failure code.
+
+```bash
+python -B -m groq_smoke flashcards --live
+python -B -m groq_smoke quiz --live
+```
+
+The regular tests mock inference. Live Groq inference has not been verified.
 
 ## API reference
 
@@ -213,7 +241,7 @@ For the current production domains, set these Vercel environment variables:
 
 - Backend: `CORS_ORIGINS=https://smart-cards-olive.vercel.app`
 - Frontend: `VITE_API_BASE_URL=https://smart-cards-kvoz.vercel.app`
-- Legacy generation requires an existing server-side credential and available account quota.
+- Hosted generation requires a server-side provider credential and available account quota.
 
 Redeploy both projects after changing environment variables. An explicit
 `CORS_ORIGINS` replaces the defaults; include every frontend origin you use.
