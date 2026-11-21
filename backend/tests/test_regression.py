@@ -54,6 +54,9 @@ def write_pptx(buffer):
 
 class ApiRegressionTests(unittest.TestCase):
     def setUp(self):
+        provider_config = patch.dict(os.environ, {"AI_PROVIDER": "legacy_openai", "AI_MODEL": ""})
+        provider_config.start()
+        self.addCleanup(provider_config.stop)
         with patch.dict(os.environ, {"CORS_ORIGINS": ORIGIN}):
             app = create_app()
         self.client = app.test_client()
@@ -105,7 +108,7 @@ class ApiRegressionTests(unittest.TestCase):
             "preview": " ".join(["word"] * 2000), "word_count": 2000,
         })
 
-    @patch("app.ai.create_client")
+    @patch("app.legacy_openai.create_client")
     def test_generation_counts_and_response_contract(self, create_client):
         complete = create_client.return_value.chat.completions.create
         for route in ROUTES:
@@ -138,7 +141,7 @@ class ApiRegressionTests(unittest.TestCase):
                     self.assertIn(f"generate {effective_count} ", prompt)
                     self.assertIn(NOTES, prompt)
 
-    @patch("app.ai.create_client")
+    @patch("app.legacy_openai.create_client")
     def test_invalid_generation_requests_do_not_call_provider(self, create_client):
         invalid_object = "Request body must be a valid JSON object."
         invalid_text = "Text must be a non-empty string."
@@ -192,7 +195,7 @@ class ApiRegressionTests(unittest.TestCase):
                         generate.assert_called_once_with(expected, count=10)
                         generate.reset_mock()
 
-    @patch("app.ai.create_client")
+    @patch("app.legacy_openai.create_client")
     def test_generation_rejects_text_and_request_size_over_limits(self, create_client):
         for route in ROUTES:
             for text, message in (
@@ -231,7 +234,7 @@ class ApiRegressionTests(unittest.TestCase):
         self.assertNotIn("Synthetic parser detail", response.json["error"])
         self.assertNotIn("Synthetic parser detail", "\n".join(logs.output))
 
-    @patch("app.ai.create_client")
+    @patch("app.legacy_openai.create_client")
     def test_provider_error_status_envelope_and_cors(self, create_client):
         complete = create_client.return_value.chat.completions.create
         for route in ROUTES:

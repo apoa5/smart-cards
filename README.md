@@ -17,7 +17,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 | Frontend | React 19, Vite, React Router, Tailwind CSS |
 | API client | Axios |
 | Backend | Python, Flask, Flask-CORS |
-| AI | OpenAI API using `gpt-3.5-turbo` |
+| AI | Provider interface with a legacy OpenAI adapter |
 | Document parsing | PyPDF2, python-docx, python-pptx |
 | Deployment | Vercel |
 
@@ -26,7 +26,7 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 1. The visitor uploads a document from the public dashboard.
 2. The Flask API extracts readable text and returns a preview and word count.
 3. The visitor selects a content type and item count.
-4. The backend sends the extracted text to OpenAI's `gpt-3.5-turbo` model and returns structured JSON.
+4. The backend sends the extracted text to the configured provider, validates the output, and returns structured JSON.
 5. React renders the generated flashcards or interactive quiz in the browser.
 
 The browser sends study documents and generation requests to Flask. The OpenAI API key remains on the server.
@@ -56,7 +56,7 @@ The browser sends study documents and generation requests to Flask. The OpenAI A
 
 - Node.js 20.19+ or 22.12+ and npm
 - Python 3.10 or later
-- An OpenAI API key
+- Optional legacy OpenAI credentials for existing integrations that already use them. Offline tests require no credentials.
 
 ### 1. Start the backend
 
@@ -71,7 +71,6 @@ cp .env.example .env
 Update `backend/.env`:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key
 CORS_ORIGINS=http://localhost:5173
 ```
 
@@ -106,6 +105,26 @@ npm run dev
 ```
 
 Open `http://localhost:5173`, select **Get started**, and upload a supported document from the dashboard.
+
+### Inference configuration
+
+The backend separates prompts, provider calls, JSON decoding, and study item
+validation. Offline tests inject a fake provider or mock the legacy client.
+
+The only adapter in this step is **legacy OpenAI for compatibility**. An
+existing installation with `OPENAI_API_KEY` continues to use that adapter
+when `AI_PROVIDER` is unset. To select it explicitly, set
+`AI_PROVIDER=legacy_openai`. Its default model is `gpt-3.5-turbo` and
+`AI_MODEL` can override it. Without provider credentials, health checks and
+uploads remain available and generation returns HTTP 502. Legacy OpenAI is
+a transitional option, with no production provider selected for the migration.
+
+The planned hosted configuration is `AI_PROVIDER=openai_compatible` with
+server-side `AI_MODEL`, `AI_BASE_URL`, and `AI_API_KEY`. The hosted selector
+is currently unsupported and fails closed, even if a legacy key is present.
+No provider, including a hosted service such as Groq, is guaranteed free or
+available. Verify account-level quotas, model access, and pricing before
+selecting or enabling a provider.
 
 ## API reference
 
@@ -174,7 +193,7 @@ npm run preview   # Preview the production build locally
 
 Deploy the repository as two Vercel projects:
 
-1. Create a backend project with `backend` as its Root Directory. Add `OPENAI_API_KEY` and `CORS_ORIGINS`, then deploy it.
+1. Create a backend project with `backend` as its Root Directory. Set `CORS_ORIGINS` and follow the inference configuration above for generation.
 2. Create a frontend project with `frontend` as its Root Directory. Add `VITE_API_BASE_URL`, then deploy it.
 3. Set `VITE_API_BASE_URL` to the deployed backend URL and `CORS_ORIGINS` to the deployed frontend URL. Redeploy after changing environment variables.
 
@@ -184,7 +203,7 @@ Deploy the repository as two Vercel projects:
 
 - Only extractable text is used; scanned PDFs require OCR before upload.
 - Extraction is capped at 2,000 words to keep generation requests manageable.
-- Both flashcards and quiz questions are generated with `gpt-3.5-turbo`.
+- The legacy adapter defaults to `gpt-3.5-turbo` for both flashcards and quizzes.
 - AI-generated study material can contain mistakes. Verify important facts against the source.
 - Keep `OPENAI_API_KEY` on the backend. Never expose it through a `VITE_` variable.
 
@@ -194,7 +213,7 @@ For the current production domains, set these Vercel environment variables:
 
 - Backend: `CORS_ORIGINS=https://smart-cards-olive.vercel.app`
 - Frontend: `VITE_API_BASE_URL=https://smart-cards-kvoz.vercel.app`
-- Backend: a valid `OPENAI_API_KEY` with available provider quota.
+- Legacy generation requires an existing server-side credential and available account quota.
 
 Redeploy both projects after changing environment variables. An explicit
 `CORS_ORIGINS` replaces the defaults; include every frontend origin you use.

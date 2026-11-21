@@ -27,7 +27,9 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
   in memory.
 - Both generation routes are tested with the default count and explicit 5, 10,
   and 15 counts, success envelopes, malformed requests, and provider failures.
-  Tests replace the OpenAI client factory or the route's generation function.
+  Tests inject fake providers or replace the legacy OpenAI client factory or
+  the route's generation function. Factory tests cover legacy compatibility
+  and rejection of the reserved hosted selector.
 - Standalone validators cover exact counts, item fields and types, blank values,
   duplicate questions and options, and quiz answer matching. Mocked OpenAI
   completions exercise JSON fences, malformed and truncated output, and the

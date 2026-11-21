@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 from app.utils.utils import extract_text_from_file
-from app.ai import GenerationError, generate_flashcards, generate_quiz_questions
+from app.ai import generate_flashcards, generate_quiz_questions
+from app.ai_errors import GenerationError
 
 main = Blueprint("main", __name__)
 

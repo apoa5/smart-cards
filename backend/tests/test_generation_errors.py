@@ -5,11 +5,16 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from app import create_app
-from app.ai import generation_error
+from app.ai_errors import generation_error
 from test_study_output import study_items
 
 
 class GenerationErrorTests(unittest.TestCase):
+    def setUp(self):
+        provider_config = patch.dict(os.environ, {"AI_PROVIDER": "legacy_openai", "AI_MODEL": ""})
+        provider_config.start()
+        self.addCleanup(provider_config.stop)
+
     def test_missing_key_on_both_routes(self):
         client = create_app().test_client()
         with patch.dict(os.environ, {"OPENAI_API_KEY": ""}):
@@ -35,14 +40,14 @@ class GenerationErrorTests(unittest.TestCase):
 
     def test_truncated_response(self):
         response = SimpleNamespace(choices=[SimpleNamespace(finish_reason="length")])
-        with patch("app.ai.create_client") as factory:
+        with patch("app.legacy_openai.create_client") as factory:
             factory.return_value.chat.completions.create.return_value = response
             client = create_app().test_client()
             result = client.post("/api/generate_flashcards", json={"text": "Notes"})
         self.assertEqual(result.status_code, 502)
         self.assertEqual(result.json["code"], "invalid_ai_response")
 
-    @patch("app.ai.create_client")
+    @patch("app.legacy_openai.create_client")
     def test_invalid_model_output_is_rejected_by_both_routes(self, factory):
         completion = factory.return_value.chat.completions.create
         client = create_app().test_client()
