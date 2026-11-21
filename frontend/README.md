@@ -1,14 +1,12 @@
 # SmartCards frontend
 
-The SmartCards frontend is a React single-page application for authentication, document upload, and displaying flashcards and quizzes generated with OpenAI's `gpt-3.5-turbo` model. It uses Supabase for user sessions and communicates with the separate Flask backend through Axios.
+The SmartCards frontend is a React single-page application for document upload, and displaying flashcards and quizzes generated with OpenAI's `gpt-3.5-turbo` model. It communicates with the separate Flask backend through Axios.
 
 For full-stack setup and deployment instructions, see the [project README](../README.md).
 
 ## Main features
 
-- Public landing page with login and signup routes
-- Supabase email/password authentication
-- Route guards for authenticated and unauthenticated users
+- Public landing page and study dashboard
 - Document upload with progress and API error feedback
 - Selection of 5, 10, or 15 flashcards or quiz questions
 - Interactive flashcard and multiple-choice quiz views
@@ -20,8 +18,7 @@ For full-stack setup and deployment instructions, see the [project README](../RE
 | --- | --- |
 | React 19 | Component-based user interface |
 | Vite | Development server and production bundler |
-| React Router | Client-side pages and route protection |
-| Supabase JS | Authentication and session management |
+| React Router | Client-side navigation |
 | Axios | Requests to the Flask API |
 | Tailwind CSS | Utility-first styling |
 | Heroicons | Interface icons |
@@ -32,7 +29,6 @@ For full-stack setup and deployment instructions, see the [project README](../RE
 
 - Node.js 20.19+ or 22.12+ and npm
 - A running SmartCards backend, locally or remotely
-- A Supabase project with email/password authentication enabled
 
 ### Installation
 
@@ -46,8 +42,6 @@ Add the required values to `.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 Then start Vite:
@@ -63,10 +57,8 @@ The app is available at `http://localhost:5173` by default. The backend must all
 | Variable | Required | Description |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | No | Flask API URL; defaults to `http://localhost:5000` |
-| `VITE_SUPABASE_URL` | Yes | URL of the Supabase project |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Public anon key used by the Supabase browser client |
 
-Vite embeds variables prefixed with `VITE_` in the browser bundle. Never store private service-role keys or an OpenAI API key in this file.
+Vite embeds variables prefixed with `VITE_` in the browser bundle. Never store an OpenAI API key in this file.
 
 ## Application structure
 
@@ -75,21 +67,14 @@ src/
 ├── components/
 │   ├── FileUploader.jsx    # Upload and generation workflow
 │   ├── FlashcardList.jsx   # Generated flashcard display
-│   ├── QuizList.jsx        # Interactive quiz display
-│   ├── PrivateRoute.jsx    # Authenticated-route guard
-│   └── PublicRoute.jsx     # Guest-only route guard
-├── context/
-│   └── AuthContext.jsx     # Supabase session state and logout
+│   └── QuizList.jsx        # Interactive quiz display
 ├── pages/
 │   ├── LandingPage.jsx
-│   ├── Login.jsx
-│   ├── Signup.jsx
 │   └── Dashboard.jsx
 ├── api.js                  # Axios client and backend base URL
-├── App.jsx                 # Route definitions and providers
+├── App.jsx                 # Route definitions
 ├── index.css               # Global styles and Tailwind import
-├── main.jsx                # React entry point
-└── supabaseClient.jsx      # Supabase client configuration
+└── main.jsx                # React entry point
 ```
 
 ## Routes
@@ -97,11 +82,8 @@ src/
 | Route | Access | Description |
 | --- | --- | --- |
 | `/` | Public | Product landing page |
-| `/signup` | Signed-out users | Account creation |
-| `/login` | Signed-out users | Existing user login |
-| `/dashboard` | Signed-in users | Upload and content-generation workspace |
-
-`AuthContext` restores the current Supabase session when the app loads and listens for later authentication changes. `PrivateRoute` and `PublicRoute` use that shared state to redirect users when needed.
+| `/dashboard` | Public | Upload and content-generation workspace |
+| `/login`, `/signup` | Public | Legacy URLs that redirect to `/dashboard` |
 
 ## Backend integration
 
@@ -131,7 +113,7 @@ npm run build
 
 ## Vercel deployment
 
-Create a Vercel project with `frontend` as its Root Directory and add all three environment variables listed above. Set `VITE_API_BASE_URL` to the deployed backend, then deploy.
+Create a Vercel project with `frontend` as its Root Directory and set `VITE_API_BASE_URL` to the deployed backend, then deploy.
 
 The included `vercel.json` rewrites requests to `index.html`, allowing React Router pages such as `/login` and `/dashboard` to load correctly after a refresh.
 
@@ -139,8 +121,8 @@ The included `vercel.json` rewrites requests to `index.html`, allowing React Rou
 
 From `frontend/`, install the locked dependencies with `npm ci` and run
 `npm test`. Vitest runs the React Testing Library suites in jsdom. The tests
-exercise the real routing, session guards, upload controls, and study
-renderers with mocked Supabase and Axios modules. They run without
+exercise public routing, legacy redirects, upload controls, and study
+renderers. The study tests mock the Axios client. They run without
 credentials or network services after dependency installation.
 
 See the [regression test notes](../docs/refactor/TESTING.md) for backend

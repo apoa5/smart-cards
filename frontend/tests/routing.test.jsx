@@ -1,10 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import App from "../src/App";
-
-vi.mock("../src/supabaseClient", () => {
-  throw new Error("Public routes must not load the Supabase client");
-});
 
 afterEach(() => {
   cleanup();
@@ -22,6 +18,13 @@ test("a fresh visit to /dashboard opens the study workspace without a session", 
   window.history.replaceState(null, "", "/dashboard");
   render(<App />);
   expect(screen.getByRole("button", { name: /choose file/i })).toBeTruthy();
-  expect(screen.queryByRole("button", { name: /log out/i })).toBeNull();
   expect(window.location.pathname).toBe("/dashboard");
+});
+
+test.each(["/login", "/signup"])("%s redirects to the public dashboard", async (path) => {
+  window.history.replaceState(null, "", path);
+  render(<App />);
+  await screen.findByRole("button", { name: /choose file/i });
+  expect(window.location.pathname).toBe("/dashboard");
+  expect(screen.queryByRole("heading", { name: /sign in|sign up/i })).toBeNull();
 });

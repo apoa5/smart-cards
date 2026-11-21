@@ -1,6 +1,6 @@
 # SmartCards regression tests
 
-The Step 02 suites exercise the existing application. Test data is synthetic,
+The regression suites exercise the current application. Test data is synthetic,
 and test execution requires no credentials, running servers, or provider access.
 
 ## Running locally
@@ -28,19 +28,13 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
 - Both generation routes are tested with the default count and explicit 5, 10,
   and 15 counts, success envelopes, malformed requests, and provider failures.
   Tests replace the OpenAI client factory or the route's generation function.
-- The frontend tests exercise the landing CTA, authenticated and signed-out
-  route redirects, logout, file selection and validation, upload states,
-  generation payloads, flashcard review, and quiz answer feedback. Supabase and
-  the Axios client module are replaced with mocks.
+- The frontend tests exercise the landing CTA, direct public dashboard access,
+  legacy URL redirects, file selection and validation, upload states, generation
+  payloads, flashcard review, and quiz answer feedback. The study tests mock the
+  Axios client module.
 
 ## Pre-existing failures and gaps
 
-- `npm run lint` reports `react-refresh/only-export-components` at
-  `frontend/src/context/AuthContext.jsx:5:14`. This is the same failure recorded
-  in [Step 01](BASELINE.md).
-- With the mocked Supabase session, confirmed logout lands on `/login` even
-  though the dashboard requests navigation to `/`. The suite records the
-  observed guard redirect. Live logout timing was outside the test run.
 - Generation routes currently assume the JSON root is an object. A non-object
   body can yield HTTP 500. The API also lacks count, text-type, and provider
   output schema validation. The tests cover the supported count choices and
@@ -54,4 +48,7 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
 
 On Node 22.23.3 and Python 3.12.3, the backend suite passed all 15 tests and
 `npm test` passed all 10 tests. `npm run build` passed with Vite 7.0.5.
-`npm run lint` exited 1 with the single existing AuthContext error above.
+`npm run lint` exited 1 with the `react-refresh/only-export-components` error
+in `AuthContext.jsx` recorded in [Step 01](BASELINE.md). With the mocked
+Supabase session, confirmed logout reached `/login` despite the dashboard's
+request to navigate to `/`. Step 04 removed the obsolete auth code.

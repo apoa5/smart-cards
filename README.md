@@ -1,15 +1,13 @@
 # SmartCards
 
-SmartCards is a full-stack study tool that turns class notes and learning materials into AI-generated flashcards and multiple-choice quizzes. Users can create an account, upload a supported document, and choose whether to generate 5, 10, or 15 study items from its content.
+SmartCards is a full-stack study tool that turns class notes and learning materials into AI-generated flashcards and multiple-choice quizzes. Visitors can upload a supported document, and choose whether to generate 5, 10, or 15 study items from its content.
 
 ## What it does
 
-- Authenticates users with Supabase email and password authentication
 - Extracts and cleans text from TXT, PDF, DOCX, and PPTX files
 - Limits extracted content to 2,000 words before generation
 - Generates question-and-answer flashcards with OpenAI
 - Generates multiple-choice quizzes with immediate answer feedback
-- Protects the dashboard from unauthenticated access
 - Supports separate frontend and backend deployments on Vercel
 
 ## Tech stack
@@ -18,7 +16,6 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 | --- | --- |
 | Frontend | React 19, Vite, React Router, Tailwind CSS |
 | API client | Axios |
-| Authentication | Supabase Auth |
 | Backend | Python, Flask, Flask-CORS |
 | AI | OpenAI API using `gpt-3.5-turbo` |
 | Document parsing | PyPDF2, python-docx, python-pptx |
@@ -26,14 +23,13 @@ SmartCards is a full-stack study tool that turns class notes and learning materi
 
 ## How it works
 
-1. Supabase creates or restores the user's authentication session.
-2. The user uploads a document from the protected dashboard.
-3. The Flask API extracts readable text and returns a preview and word count.
-4. The user selects a content type and item count.
-5. The backend sends the extracted text to OpenAI's `gpt-3.5-turbo` model and returns structured JSON.
-6. React renders the generated flashcards or interactive quiz in the browser.
+1. The visitor uploads a document from the public dashboard.
+2. The Flask API extracts readable text and returns a preview and word count.
+3. The visitor selects a content type and item count.
+4. The backend sends the extracted text to OpenAI's `gpt-3.5-turbo` model and returns structured JSON.
+5. React renders the generated flashcards or interactive quiz in the browser.
 
-The browser communicates with Supabase directly for authentication. Study documents and generation requests are sent to the Flask API; the OpenAI API key remains on the server.
+The browser sends study documents and generation requests to Flask. The OpenAI API key remains on the server.
 
 ## Project structure
 
@@ -41,11 +37,9 @@ The browser communicates with Supabase directly for authentication. Study docume
 .
 ├── frontend/               # React single-page application
 │   ├── src/
-│   │   ├── components/     # Upload, flashcard, quiz, and route components
-│   │   ├── context/        # Shared authentication state
-│   │   ├── pages/          # Landing, login, signup, and dashboard pages
-│   │   ├── api.js          # Configured backend API client
-│   │   └── supabaseClient.jsx
+│   │   ├── components/     # Upload, flashcard, and quiz components
+│   │   ├── pages/          # Landing and dashboard pages
+│   │   └── api.js          # Configured backend API client
 │   └── vercel.json         # SPA routing configuration
 └── backend/                # Flask API
     ├── api/index.py        # Vercel serverless entry point
@@ -62,14 +56,9 @@ The browser communicates with Supabase directly for authentication. Study docume
 
 - Node.js 20.19+ or 22.12+ and npm
 - Python 3.10 or later
-- A Supabase project
 - An OpenAI API key
 
-### 1. Configure Supabase
-
-Create a Supabase project and enable email/password authentication. Find the project URL and anon key under the project's API settings. The anon key is designed for browser use; authorization should still be enforced through Supabase policies.
-
-### 2. Start the backend
+### 1. Start the backend
 
 ```bash
 cd backend
@@ -94,7 +83,7 @@ python run.py
 
 The API runs at `http://localhost:5000`. Confirm it is available at `http://localhost:5000/api/health`.
 
-### 3. Start the frontend
+### 2. Start the frontend
 
 In a second terminal:
 
@@ -108,8 +97,6 @@ Update `frontend/.env`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 Start the development server:
@@ -118,7 +105,7 @@ Start the development server:
 npm run dev
 ```
 
-Open `http://localhost:5173`, create an account, and upload a supported document from the dashboard.
+Open `http://localhost:5173`, select **Get started**, and upload a supported document from the dashboard.
 
 ## API reference
 
@@ -147,7 +134,7 @@ npm run preview   # Preview the production build locally
 Deploy the repository as two Vercel projects:
 
 1. Create a backend project with `backend` as its Root Directory. Add `OPENAI_API_KEY` and `CORS_ORIGINS`, then deploy it.
-2. Create a frontend project with `frontend` as its Root Directory. Add `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`, then deploy it.
+2. Create a frontend project with `frontend` as its Root Directory. Add `VITE_API_BASE_URL`, then deploy it.
 3. Set `VITE_API_BASE_URL` to the deployed backend URL and `CORS_ORIGINS` to the deployed frontend URL. Redeploy after changing environment variables.
 
 `CORS_ORIGINS` accepts a comma-separated list, which is useful when production and preview frontend URLs both need API access. Do not add a trailing slash to an origin.
