@@ -140,19 +140,96 @@ class ApiRegressionTests(unittest.TestCase):
 
     @patch("app.ai.create_client")
     def test_invalid_generation_requests_do_not_call_provider(self, create_client):
+        invalid_object = "Request body must be a valid JSON object."
+        invalid_text = "Text must be a non-empty string."
+        invalid_count = "Count must be an integer of 5, 10, or 15."
+        cases = [
+            ({}, 400, invalid_object),
+            ({"content_type": "application/json"}, 400, invalid_object),
+            ({"data": "{", "content_type": "application/json"}, 400, invalid_object),
+            ({"data": "null", "content_type": "application/json"}, 400, invalid_object),
+            ({"json": ["text"]}, 400, invalid_object),
+            ({"json": NOTES}, 400, invalid_object),
+            ({"data": "[" * 2_000, "content_type": "application/json"}, 400, invalid_object),
+            ({"data": '{"text":"Notes"}', "content_type": "text/plain"},
+             415, "Send the request with a JSON content type."),
+            ({"json": {}}, 400, invalid_text),
+        ]
+        cases.extend(
+            ({"json": {"text": value}}, 400, invalid_text)
+            for value in ("", " \t\n", 3, True, None, ["Notes"], {"notes": NOTES})
+        )
+        cases.extend(
+            ({"json": {"text": NOTES, "count": value}}, 400, invalid_count)
+            for value in (True, False, "5", 5.0, 10.5, -5, 0, 7, 20, None, [])
+        )
         for route in ROUTES:
-            for kwargs, status in (
-                ({"json": {}}, 400),
-                ({"json": {"text": ""}}, 400),
-                ({"data": "{", "content_type": "application/json"}, 400),
-                ({}, 415),
-            ):
+            for kwargs, status, error in cases:
                 with self.subTest(route=route, kwargs=kwargs):
-                    response = self.client.post(f"/api/generate_{route}", **kwargs)
+                    response = self.client.post(
+                        f"/api/generate_{route}", headers={"Origin": ORIGIN}, **kwargs
+                    )
                     self.assertEqual(response.status_code, status)
-                    if "json" in kwargs:
-                        self.assertEqual(response.json, {"error": "No text provided"})
+                    self.assertEqual(response.json, {"error": error})
+                    self.assertEqual(response.headers.get("Access-Control-Allow-Origin"), ORIGIN)
         create_client.assert_not_called()
+
+    def test_generation_accepts_limits_and_passes_trimmed_input(self):
+        for route, function in (("flashcards", "generate_flashcards"),
+                                ("quiz", "generate_quiz_questions")):
+            with patch(f"app.routes.{function}", return_value=[{"question": "Example?"}]) as generate:
+                for text, expected in (
+                    (" \t" + NOTES + "\n ", NOTES),
+                    (" ".join(["word"] * 2_000), " ".join(["word"] * 2_000)),
+                    ("x" * 32_000, "x" * 32_000),
+                ):
+                    with self.subTest(route=route, characters=len(text)):
+                        response = self.client.post(
+                            f"/api/generate_{route}", json={"text": text, "count": 10}
+                        )
+                        self.assertEqual(response.status_code, 200)
+                        self.assertEqual(response.json, {route: generate.return_value})
+                        generate.assert_called_once_with(expected, count=10)
+                        generate.reset_mock()
+
+    @patch("app.ai.create_client")
+    def test_generation_rejects_text_and_request_size_over_limits(self, create_client):
+        for route in ROUTES:
+            for text, message in (
+                ("word " * 2_001, "Text exceeds the 2,000-word limit."),
+                ("x" * 32_001, "Text exceeds the 32,000-character limit."),
+                (" " + "x" * 32_000, "Text exceeds the 32,000-character limit."),
+            ):
+                with self.subTest(route=route, message=message, characters=len(text)):
+                    response = self.client.post(f"/api/generate_{route}", json={"text": text})
+                    self.assertEqual(response.status_code, 413)
+                    self.assertEqual(response.json, {"error": message})
+
+            with self.subTest(route=route, limit="request body"):
+                response = self.client.post(
+                    f"/api/generate_{route}", json={"text": "x" * 4_100_000}
+                )
+                self.assertEqual(response.status_code, 413)
+                self.assertEqual(set(response.json), {"error"})
+                self.assertNotIn("upload", response.json["error"].lower())
+        create_client.assert_not_called()
+
+    def test_upload_rejects_blank_filenames(self):
+        for filename in ("", " \t"):
+            with self.subTest(filename=filename):
+                response = self.upload(filename, NOTES.encode())
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json, {"error": "No file uploaded"})
+
+    @patch("app.routes.extract_text_from_file", side_effect=ValueError("Synthetic parser detail"))
+    def test_upload_parser_errors_omit_exception_details(self, extract):
+        with self.assertLogs("app", level="WARNING") as logs:
+            response = self.upload("notes.txt", NOTES.encode())
+        extract.assert_called_once()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Could not read this document", response.json["error"])
+        self.assertNotIn("Synthetic parser detail", response.json["error"])
+        self.assertNotIn("Synthetic parser detail", "\n".join(logs.output))
 
     @patch("app.ai.create_client")
     def test_provider_error_status_envelope_and_cors(self, create_client):

@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 
@@ -20,15 +20,20 @@ def create_app():
     app.config["MAX_CONTENT_LENGTH"] = 4_100_000
     CORS(app, resources={r"/api/*": {"origins": _cors_origins()}})
 
+    from .routes import UPLOAD_LIMIT_MESSAGE, main
+
     @app.errorhandler(413)
     def payload_too_large(error):
-        return jsonify({"error": "File too large. Upload a file of 4 MB or less."}), 413
+        if request.endpoint == "main.upload_file":
+            message = UPLOAD_LIMIT_MESSAGE
+        else:
+            message = error.description
+        return jsonify({"error": message}), 413
 
     @app.errorhandler(500)
     def internal_error(error):
         return jsonify({"error": "The server could not complete the request. Please try again."}), 500
 
-    from .routes import main
     app.register_blueprint(main)
 
     return app

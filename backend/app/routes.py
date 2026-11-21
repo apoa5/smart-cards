@@ -1,8 +1,21 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, abort, current_app, jsonify, request
+from werkzeug.exceptions import HTTPException
 from app.utils.utils import extract_text_from_file
 from app.ai import GenerationError, generate_flashcards, generate_quiz_questions
 
 main = Blueprint("main", __name__)
+
+MAX_UPLOAD_BYTES = 4_000_000
+MAX_GENERATION_WORDS = 2_000  # Matches document preprocessing.
+MAX_GENERATION_CHARACTERS = 32_000
+GENERATION_COUNTS = (5, 10, 15)
+UPLOAD_LIMIT_MESSAGE = "File too large. Upload a file of 4 MB or less."
+
+
+@main.errorhandler(400)
+@main.errorhandler(415)
+def handle_invalid_request(error: HTTPException):
+    return jsonify({"error": error.description}), error.code
 
 
 @main.errorhandler(GenerationError)
@@ -18,7 +31,7 @@ def health():
 def upload_file():
     uploaded_file = request.files.get("file")
 
-    if not uploaded_file:
+    if uploaded_file is None or not (uploaded_file.filename or "").strip():
         return jsonify({"error": "No file uploaded"}), 400
 
     filename = uploaded_file.filename.lower()
@@ -31,16 +44,16 @@ def upload_file():
     if not filename.endswith((".txt", ".pdf", ".docx", ".pptx")):
         return jsonify({"error": "Please upload a TXT, PDF, DOCX, or PPTX file."}), 400
 
-    uploaded_file.seek(0, 2)
-    file_size = uploaded_file.tell()
-    uploaded_file.seek(0)
-    if file_size > 4_000_000:
-        return jsonify({"error": "File too large. Upload a file of 4 MB or less."}), 413
-
     try:
+        uploaded_file.seek(0, 2)
+        file_size = uploaded_file.tell()
+        uploaded_file.seek(0)
+        if file_size > MAX_UPLOAD_BYTES:
+            return jsonify({"error": UPLOAD_LIMIT_MESSAGE}), 413
+
         processed_text = extract_text_from_file(uploaded_file)
-    except Exception:
-        current_app.logger.exception("Document extraction failed")
+    except Exception as error:
+        current_app.logger.warning("Document extraction failed: %s", type(error).__name__)
         return jsonify({"error": "Could not read this document. Check that it is valid and not password protected."}), 400
 
     if not processed_text:
@@ -52,31 +65,50 @@ def upload_file():
     })
 
 
+def validate_generation_request():
+    if not request.is_json and (request.mimetype or request.content_length):
+        abort(415, description="Send the request with a JSON content type.")
+
+    invalid_body = "Request body must be a valid JSON object."
+    try:
+        data = request.get_json(silent=True)
+    except RecursionError:
+        abort(400, description=invalid_body)
+    if not isinstance(data, dict):
+        abort(400, description=invalid_body)
+
+    text = data.get("text")
+    if not isinstance(text, str):
+        abort(400, description="Text must be a non-empty string.")
+    if len(text) > MAX_GENERATION_CHARACTERS:
+        abort(413, description="Text exceeds the 32,000-character limit.")
+
+    text = text.strip()
+    if not text:
+        abort(400, description="Text must be a non-empty string.")
+    if len(text.split()) > MAX_GENERATION_WORDS:
+        abort(413, description="Text exceeds the 2,000-word limit.")
+
+    count = data.get("count", 5)
+    if type(count) is not int or count not in GENERATION_COUNTS:
+        abort(400, description="Count must be an integer of 5, 10, or 15.")
+
+    return text, count
+
+
+def generate_response(generate, field):
+    text, count = validate_generation_request()
+    items = generate(text, count=count)
+    if not items:
+        return jsonify({"error": "Generation failed. Please try again. If this persists, check the server API key and provider quota."}), 502
+    return jsonify({field: items})
+
+
 @main.route("/api/generate_flashcards", methods=["POST"])
 def flashcard_route():
-    data = request.get_json()
-    text = data.get("text", "")
-    count = data.get("count", 5)
+    return generate_response(generate_flashcards, "flashcards")
 
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    flashcards = generate_flashcards(text, count=count)
-    if not flashcards:
-        return jsonify({"error": "Generation failed. Please try again. If this persists, check the server API key and provider quota."}), 502
-    return jsonify({"flashcards": flashcards})
 
 @main.route("/api/generate_quiz", methods=["POST"])
 def quiz_route():
-    data = request.get_json()
-    text = data.get("text", "")
-    count = data.get("count", 5)
-
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
-
-    quiz = generate_quiz_questions(text, count=count)
-    if not quiz:
-        return jsonify({"error": "Generation failed. Please try again. If this persists, check the server API key and provider quota."}), 502
-    return jsonify({"quiz": quiz})
-
+    return generate_response(generate_quiz_questions, "quiz")

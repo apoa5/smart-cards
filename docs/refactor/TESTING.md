@@ -35,11 +35,8 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
 
 ## Pre-existing failures and gaps
 
-- Generation routes currently assume the JSON root is an object. A non-object
-  body can yield HTTP 500. The API also lacks count, text-type, and provider
-  output schema validation. The tests cover the supported count choices and
-  current error responses for malformed JSON and missing text. They leave
-  future validation expectations for the steps that change those contracts.
+- Generation input validation covers JSON bodies, text and count types,
+  and size boundaries. Provider output schema validation remains outside this suite.
 - Backend runs may emit expected parser and provider error logs and the
   pre-existing unclosed-file resource warnings. Live service and deployment
   behavior remain outside the suites.

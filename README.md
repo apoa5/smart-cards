@@ -116,7 +116,36 @@ Open `http://localhost:5173`, select **Get started**, and upload a supported doc
 | `POST` | `/api/generate_flashcards` | Generate flashcards from JSON `text` and optional `count` values |
 | `POST` | `/api/generate_quiz` | Generate quiz questions from JSON `text` and optional `count` values |
 
-The upload endpoint accepts `.txt`, `.pdf`, `.docx`, and `.pptx`. Legacy `.doc` and `.ppt` files must be converted to their newer formats first.
+### Upload
+
+Send a multipart form with a named `file` field. The filename must end in
+`.txt`, `.pdf`, `.docx`, or `.pptx` (case-insensitive). Convert legacy
+`.doc` and `.ppt` files before uploading. The file limit is 4,000,000 bytes.
+A successful upload returns `{"preview":"...","word_count":N}`, with extracted
+text capped at 2,000 words. Missing filenames, unsupported formats, unreadable
+files, and empty extraction return HTTP 400.
+
+### Generation
+
+Send a JSON object with an `application/json` or `application/*+json` content
+type. The `text` field must be a string with content after trimming. It can
+contain up to 32,000 characters before trimming and 2,000 whitespace-separated
+words after trimming. These limits apply to every generation request, including
+direct requests without an upload. The optional `count` must be the JSON
+integer `5`, `10`, or `15`. Omitting it defaults to `5`.
+
+Successful responses are `{"flashcards":[...]}` and `{"quiz":[...]}`.
+
+### Errors
+
+| Status | When |
+| --- | --- |
+| 400 | Invalid upload, missing or malformed JSON, a non-object JSON body, or invalid `text` or `count` |
+| 413 | File or generation text exceeds its limit, or Flask rejects the request body above 4,100,000 bytes |
+| 415 | Generation request uses a non-JSON content type |
+
+Input errors use `{"error":"..."}`. Classified generation failures retain
+their existing HTTP status and `{"error":"...","code":"..."}` response.
 
 ## Useful frontend commands
 
