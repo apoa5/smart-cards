@@ -5,6 +5,8 @@ import logging
 from openai import OpenAI
 from dotenv import load_dotenv
 
+from .study_output import validate_flashcards, validate_quiz
+
 load_dotenv()
 
 
@@ -47,6 +49,21 @@ def create_client():
     return OpenAI(api_key=key, timeout=40.0, max_retries=0)
 
 
+def _decode_completion(response):
+    if not response.choices or response.choices[0].finish_reason == "length":
+        raise ValueError("Missing or truncated AI response")
+    content = response.choices[0].message.content
+    if not isinstance(content, str):
+        raise ValueError("Expected AI response text")
+    content = content.strip()
+    if content.startswith("```"):
+        content = re.sub(r"^```json\s*|\s*```$", "", content, flags=re.IGNORECASE).strip()
+    try:
+        return json.loads(content)
+    except RecursionError:
+        raise ValueError("AI response JSON is nested too deeply") from None
+
+
 def generate_flashcards(text, count=5):
     prompt = f"""
     You are a helpful study assistant. Based on the following text, generate {count} flashcards. 
@@ -72,16 +89,7 @@ def generate_flashcards(text, count=5):
             max_tokens=1000
         )
 
-        if response.choices[0].finish_reason == "length":
-            raise ValueError("Truncated AI response")
-        content = (response.choices[0].message.content or "").strip()
-
-        # Clean up markdown formatting if present
-        if content.startswith("```"):
-            content = re.sub(r"^```json\s*|\s*```$", "", content, flags=re.IGNORECASE).strip()
-
-        flashcards = json.loads(content)
-        return flashcards
+        return validate_flashcards(_decode_completion(response), count)
 
     except Exception as e:
         raise generation_error(e) from e
@@ -114,15 +122,7 @@ def generate_quiz_questions(text, count=5):
             max_tokens=1000
         )
 
-        if response.choices[0].finish_reason == "length":
-            raise ValueError("Truncated AI response")
-        content = (response.choices[0].message.content or "").strip()
-
-        if content.startswith("```"):
-            content = re.sub(r"^```json\s*|\s*```$", "", content, flags=re.IGNORECASE).strip()
-
-        quiz = json.loads(content)
-        return quiz
+        return validate_quiz(_decode_completion(response), count)
 
     except Exception as e:
         raise generation_error(e) from e

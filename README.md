@@ -134,7 +134,17 @@ words after trimming. These limits apply to every generation request, including
 direct requests without an upload. The optional `count` must be the JSON
 integer `5`, `10`, or `15`. Omitting it defaults to `5`.
 
-Successful responses are `{"flashcards":[...]}` and `{"quiz":[...]}`.
+Successful responses are `{"flashcards":[...]}` and `{"quiz":[...]}`. Each
+array contains exactly the requested number of items.
+
+- A flashcard has exactly `question` and `answer`, both nonblank strings.
+- A quiz item has exactly `question`, `options`, and `correct_answer`.
+  The question and answer are nonblank strings. Options are four distinct,
+  nonblank strings. The correct answer must match one option exactly,
+  including case and whitespace.
+- Questions must be distinct within a response. Uniqueness checks for questions
+  and options ignore surrounding whitespace. Returned strings retain their
+  original content.
 
 ### Errors
 
@@ -146,6 +156,8 @@ Successful responses are `{"flashcards":[...]}` and `{"quiz":[...]}`.
 
 Input errors use `{"error":"..."}`. Classified generation failures retain
 their existing HTTP status and `{"error":"...","code":"..."}` response.
+Malformed, truncated, or invalid model output returns HTTP 502 with
+`code: "invalid_ai_response"`.
 
 ## Useful frontend commands
 

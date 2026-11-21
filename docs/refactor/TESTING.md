@@ -28,6 +28,10 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
 - Both generation routes are tested with the default count and explicit 5, 10,
   and 15 counts, success envelopes, malformed requests, and provider failures.
   Tests replace the OpenAI client factory or the route's generation function.
+- Standalone validators cover exact counts, item fields and types, blank values,
+  duplicate questions and options, and quiz answer matching. Mocked OpenAI
+  completions exercise JSON fences, malformed and truncated output, and the
+  stable HTTP 502 response for invalid output.
 - The frontend tests exercise the landing CTA, direct public dashboard access,
   legacy URL redirects, file selection and validation, upload states, generation
   payloads, flashcard review, and quiz answer feedback. The study tests mock the
@@ -35,8 +39,6 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
 
 ## Pre-existing failures and gaps
 
-- Generation input validation covers JSON bodies, text and count types,
-  and size boundaries. Provider output schema validation remains outside this suite.
 - Backend runs may emit expected parser and provider error logs and the
   pre-existing unclosed-file resource warnings. Live service and deployment
   behavior remain outside the suites.
