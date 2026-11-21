@@ -1,65 +1,27 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import App from "../src/App";
-import { supabase } from "../src/supabaseClient";
 
-vi.mock("../src/supabaseClient", () => ({
-  supabase: {
-    auth: {
-      getSession: vi.fn(),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-      signOut: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("../src/api", () => ({ api: { post: vi.fn() } }));
-
-beforeEach(() => {
-  supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
-  supabase.auth.signOut.mockResolvedValue({});
+vi.mock("../src/supabaseClient", () => {
+  throw new Error("Public routes must not load the Supabase client");
 });
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
   window.history.replaceState(null, "", "/");
 });
 
-test("the public landing call to action opens signup", async () => {
+test("Get started opens the public dashboard", async () => {
   render(<App />);
   fireEvent.click(screen.getByRole("link", { name: /get started/i }));
-  await screen.findByRole("heading", { name: /sign up/i });
-  expect(window.location.pathname).toBe("/signup");
-});
-
-test("a signed-out visitor opening the dashboard is redirected to login", async () => {
-  window.history.replaceState(null, "", "/dashboard");
-  render(<App />);
-  await screen.findByRole("heading", { name: /sign in/i });
-  expect(window.location.pathname).toBe("/login");
-});
-
-test.each(["/login", "/signup"])("a restored session redirects %s to the dashboard", async (path) => {
-  supabase.auth.getSession.mockResolvedValue({
-    data: { session: { user: { user_metadata: { username: "Sample learner" } } } },
-  });
-  window.history.replaceState(null, "", path);
-  render(<App />);
-  await screen.findByRole("button", { name: /choose file/i });
-  expect(screen.getByText("Sample learner")).toBeTruthy();
+  await screen.findByRole("heading", { name: "Generate Flashcards and Quizzes" });
   expect(window.location.pathname).toBe("/dashboard");
 });
 
-test("confirming logout signs out and the dashboard guard redirects to login", async () => {
-  supabase.auth.getSession.mockResolvedValue({ data: { session: { user: {} } } });
+test("a fresh visit to /dashboard opens the study workspace without a session", () => {
   window.history.replaceState(null, "", "/dashboard");
   render(<App />);
-  fireEvent.click(await screen.findByRole("button", { name: /log out/i }));
-  fireEvent.click(screen.getByRole("button", { name: "Yes" }));
-  await screen.findByRole("heading", { name: /sign in/i });
-  expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
-  expect(window.location.pathname).toBe("/login");
+  expect(screen.getByRole("button", { name: /choose file/i })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /log out/i })).toBeNull();
+  expect(window.location.pathname).toBe("/dashboard");
 });

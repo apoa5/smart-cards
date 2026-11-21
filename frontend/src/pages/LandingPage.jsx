@@ -30,7 +30,7 @@ const LandingPage = () => {
 
         {/* Right: CTA Button */}
         <Link
-          to="/signup"
+          to="/dashboard"
           className="bg-lime-900 text-white text-sm px-5 py-3 rounded-full font-semibold hover:bg-lime-950 transition"
         >
           Get started →
