@@ -1,264 +1,129 @@
-import React, { useState } from "react";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  BookOpenIcon,
-  ArrowPathIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ArrowsPointingOutIcon,
-} from "@heroicons/react/24/solid";
+import { useId, useRef, useState } from "react";
+import { ArrowsPointingOutIcon, ArrowPathIcon, BookOpenIcon } from "@heroicons/react/24/solid";
+import StudyDialog from "./StudyDialog";
+import { StudyArrows, StudyNumbers } from "./StudyNavigation";
 
-const QuizList = ({ quiz }) => {
-  const [index, setIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState("");
-  const [feedback, setFeedback] = useState("");
-  const [answers, setAnswers] = useState(Array(quiz.length).fill(null));
-  const [answeredQuestions, setAnsweredQuestions] = useState(Array(quiz.length).fill(false));
-  const [selectedAnswers, setSelectedAnswers] = useState(Array(quiz.length).fill(""));
-  const [showScore, setShowScore] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-
-  if (!quiz.length) return null;
-
+function QuestionView({ quiz, index, selected, answer, onSelect, onChange, onSubmit }) {
+  const feedback = useRef(null);
+  const group = useId();
   const question = quiz[index];
+  const answered = answer !== undefined;
 
-  const handleSubmit = () => {
-    if (!selectedOption) return;
-
-    const isCorrect = selectedOption === question.correct_answer;
-    setFeedback(
-      isCorrect ? (
-        <span className="flex items-center gap-2 text-green-600">
-          <CheckCircleIcon className="w-5 h-5" />
-          Correct!
-        </span>
-      ) : (
-        <span className="flex items-center gap-2 text-red-600">
-          <XCircleIcon className="w-5 h-5" />
-          Wrong! Correct answer: {question.correct_answer}
-        </span>
-      )
-    );
-
-    const updatedAnswers = [...answers];
-    updatedAnswers[index] = isCorrect;
-    setAnswers(updatedAnswers);
-
-    const updatedAnswered = [...answeredQuestions];
-    updatedAnswered[index] = true;
-    setAnsweredQuestions(updatedAnswered);
-
-    const updatedSelectedAnswers = [...selectedAnswers];
-    updatedSelectedAnswers[index] = selectedOption;
-    setSelectedAnswers(updatedSelectedAnswers);
-
-    if (index === quiz.length - 1) {
-      setShowScore(true);
-    }
-  };
-
-  const handleNext = () => {
-    if (index < quiz.length - 1) {
-      setIndex(index + 1);
-      setFeedback("");
-      setSelectedOption(selectedAnswers[index + 1] || "");
-    }
-  };
-
-  const handlePrev = () => {
-    if (index > 0) {
-      setIndex(index - 1);
-      setFeedback("");
-      setSelectedOption(selectedAnswers[index - 1] || "");
-    }
-  };
-
-  const resetQuiz = () => {
-    setIndex(0);
-    setSelectedOption("");
-    setFeedback("");
-    setAnswers(Array(quiz.length).fill(null));
-    setAnsweredQuestions(Array(quiz.length).fill(false));
-    setSelectedAnswers(Array(quiz.length).fill(""));
-    setShowScore(false);
-  };
-
-  const score = answers.filter((ans) => ans === true).length;
-
-  // Reusable question card
-  const QuestionCard = () => (
-    <div className="relative w-full max-w-xl min-w-[24rem]">
-      {/* Prev Arrow */}
-      <button
-        onClick={handlePrev}
-        disabled={index === 0}
-        className="absolute -left-12 top-1/2 -translate-y-1/2 p-2 bg-white rounded-full shadow-md disabled:opacity-30 hover:bg-gray-200 cursor-pointer"
-      >
-        <ChevronLeftIcon className="h-6 w-6 text-gray-600" />
-      </button>
-
-      {/* Question Card */}
-      <div className="px-8 py-6 bg-white border border-gray-300 text-gray-800 rounded-2xl shadow-lg min-h-[250px] flex flex-col">
-        <p className="text-lg font-semibold mb-4">
-          Q{index + 1}: {question.question}
-        </p>
-        <form className="space-y-3">
-          {question.options.map((option, idx) => (
-            <label key={idx} className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name={`option-${index}`}
-                value={option}
-                checked={selectedOption === option}
-                onChange={(e) => setSelectedOption(e.target.value)}
-                disabled={answeredQuestions[index]}
-                className="w-4 h-4 appearance-none border-2 border-gray-900 rounded-full bg-white checked:bg-lime-900 checked:border-gray-900 cursor-pointer"
-              />
-              {option}
-            </label>
-          ))}
+  return (
+    <div className="w-full max-w-2xl">
+      <div className="relative px-10 sm:px-12">
+        <StudyArrows index={index} total={quiz.length} onSelect={onSelect} item="question" />
+        <form className="min-h-[250px] rounded-2xl border border-gray-300 bg-white p-4 text-left text-gray-800 shadow-lg sm:px-8 sm:py-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!selected || answered) return;
+            feedback.current?.focus();
+            onSubmit();
+          }}>
+          <fieldset disabled={answered}>
+            <legend className="mb-4 wrap-anywhere text-lg font-semibold">Q{index + 1}: {question.question}</legend>
+            <div className="space-y-2">
+              {question.options.map((option) => (
+                <label key={option} className="flex items-start gap-2 rounded py-1 wrap-anywhere">
+                  <input type="radio" name={group} value={option}
+                    checked={(answer ?? selected) === option} onChange={() => onChange(option)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-lime-900" />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div ref={feedback} role="status" tabIndex={-1}>
+            {answered && (
+              <p className={`mt-4 font-medium ${answer === question.correct_answer ? "text-green-700" : "text-red-700"}`}>
+                {answer === question.correct_answer ? "Correct!" : `Wrong! Correct answer: ${question.correct_answer}`}
+              </p>
+            )}
+          </div>
+          {!answered && (
+            <button type="submit" disabled={!selected}
+              className="mt-6 w-full rounded-lg bg-gray-300 py-2 font-medium text-gray-800 enabled:cursor-pointer enabled:hover:bg-gray-400 disabled:opacity-50">
+              Submit
+            </button>
+          )}
         </form>
-
-        {feedback && <div className="mt-4 font-medium">{feedback}</div>}
-
-        {!answeredQuestions[index] && (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="mt-6 w-full bg-gray-300 text-gray-800 font-medium py-2 rounded-lg hover:bg-gray-400 cursor-pointer transition"
-          >
-            Submit
-          </button>
-        )}
       </div>
-
-      {/* Next Arrow */}
-      <button
-        onClick={handleNext}
-        disabled={index === quiz.length - 1}
-        className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 bg-white rounded-full shadow-md disabled:opacity-30 hover:bg-gray-200 cursor-pointer"
-      >
-        <ChevronRightIcon className="h-6 w-6 text-gray-600" />
-      </button>
-
-      {/* Progress */}
-      <p className="text-sm text-gray-500 mt-4 text-center">
+      <p role="status" className="mt-4 text-center text-sm text-gray-600">
         Question {index + 1} of {quiz.length}
+        <span className="sr-only">. {question.question}</span>
       </p>
     </div>
   );
+}
+
+export default function QuizList({ quiz }) {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState("");
+  const [answers, setAnswers] = useState({});
+  const [showScore, setShowScore] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const headingRef = useRef(null);
+  if (!quiz.length) return null;
+
+  function select(position) {
+    setIndex(position);
+    setSelected("");
+  }
+
+  function submit() {
+    setAnswers((previous) => ({ ...previous, [index]: selected }));
+    if (index === quiz.length - 1) setShowScore(true);
+  }
+
+  function reset() {
+    select(0);
+    setAnswers({});
+    setShowScore(false);
+    headingRef.current?.focus();
+  }
+
+  const score = quiz.filter((question, position) => answers[position] === question.correct_answer).length;
+  const view = <QuestionView quiz={quiz} index={index} selected={selected} answer={answers[index]}
+    onSelect={select} onChange={setSelected} onSubmit={submit} />;
+  const navigation = <StudyNumbers index={index} total={quiz.length} onSelect={select} item="question" />;
 
   return (
-    <div className="mt-10 pt-10 border-t border-gray-300">
-      {/* Header */}
-      <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2 justify-center">
-        <BookOpenIcon className="w-7 h-7" />
+    <section className="mt-10 border-t border-gray-300 pt-10">
+      <h3 ref={headingRef} tabIndex={-1}
+        className="mb-6 flex items-center justify-center gap-2 text-2xl font-bold text-gray-800">
+        <BookOpenIcon aria-hidden="true" className="h-7 w-7" />
         Quiz
       </h3>
-
-      <div className="flex flex-col items-center gap-6 justify-center">
-        {/* Quiz Card */}
-        <QuestionCard />
-
-        {/* Number Navigation + Focus Button */}
-        <div className="flex items-center justify-center gap-4">
-          {/* Number Navigation */}
-          <div className="w-60 flex-shrink-0 p-4 bg-white rounded-lg shadow-md border border-gray-300">
-            <div className="grid grid-cols-5 gap-4">
-              {quiz.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setIndex(i);
-                    setFeedback("");
-                    setSelectedOption(selectedAnswers[i] || "");
-                  }}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition
-                    ${
-                      i === index
-                        ? "bg-lime-900 text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer"
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Focus Icon Button with Tooltip */}
-          <div className="relative group">
-            <button
-              className="bg-lime-900 text-white p-3 rounded-lg hover:bg-lime-950 cursor-pointer transition"
-              onClick={() => setFocusMode(true)}
-            >
-              <ArrowsPointingOutIcon className="w-5 h-5" />
-            </button>
-            <span className="absolute -top-10 left-1/2 -translate-x-1/2 
-              bg-gray-800 text-white text-xs rounded px-2 py-1 
-              opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-              Focus mode
-            </span>
-          </div>
+      <div className="flex flex-col items-center gap-6">
+        {view}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {navigation}
+          <button type="button" aria-label="Open quiz focus mode" aria-haspopup="dialog"
+            className="cursor-pointer rounded-lg bg-lime-900 p-3 text-white hover:bg-lime-950"
+            onClick={() => setFocusMode(true)}>
+            <ArrowsPointingOutIcon aria-hidden="true" className="h-5 w-5" />
+          </button>
         </div>
       </div>
-
-      {/* Score Section */}
       {showScore && (
-        <div className="mt-6 flex items-center gap-4 justify-center">
-          <p className="text-xl font-bold text-gray-800">
-            Your Score: {score} / {quiz.length}
-          </p>
-          <button
-            onClick={resetQuiz}
-            className="flex items-center gap-1 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-900 cursor-pointer transition"
-          >
-            <ArrowPathIcon className="w-5 h-5" />
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+          <p role="status" className="text-xl font-bold text-gray-800">Your Score: {score} / {quiz.length}</p>
+          <button type="button" onClick={reset}
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-white hover:bg-gray-900">
+            <ArrowPathIcon aria-hidden="true" className="h-5 w-5" />
             Reset Quiz
           </button>
         </div>
       )}
-
-      {/* Focus Mode Modal */}
       {focusMode && (
-        <div className="fixed inset-0 backdrop-blur-lg bg-black/70 z-50 flex items-center justify-center">
-          <button
-            className="fixed top-6 right-6 text-gray-900 w-10 h-10 bg-white hover:bg-gray-300 cursor-pointer rounded-full p-2 z-50"
-            onClick={() => setFocusMode(false)}
-          >
-            ✕
+        <StudyDialog title="Quiz focus mode" onDismiss={() => setFocusMode(false)} className="w-full sm:w-[44rem]">
+          <button type="button" data-initial-focus onClick={() => setFocusMode(false)}
+            className="mb-4 cursor-pointer rounded-lg bg-gray-200 px-3 py-2 hover:bg-gray-300">
+            Close focus mode
           </button>
-          <div className="flex flex-col items-center gap-12 justify-center">
-            <QuestionCard />
-            {/* Number Navigation inside modal */}
-            <div className="w-60 flex-shrink-0 p-4 bg-white rounded-lg shadow-md border border-gray-300">
-              <div className="grid grid-cols-5 gap-4">
-                {quiz.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setIndex(i);
-                      setFeedback("");
-                      setSelectedOption(selectedAnswers[i] || "");
-                    }}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition
-                      ${
-                        i === index
-                          ? "bg-lime-900 text-white"
-                          : "bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer"
-                      }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+          <div className="flex flex-col items-center gap-4">{view}{navigation}</div>
+        </StudyDialog>
       )}
-    </div>
+    </section>
   );
-};
-
-export default QuizList;
+}

@@ -127,3 +127,22 @@ credentials or network services after dependency installation.
 
 See the [regression test notes](../docs/refactor/TESTING.md) for backend
 commands and known baseline issues.
+
+## Upload and study behavior
+
+SmartCards announces uploads and generation in progress. Both generation
+buttons are disabled while a request is pending. You can replace or remove
+a document at any time. That clears its results and cancels the browser
+request where possible. A request that already reached the server may still
+complete and count toward its request budget.
+
+Empty and unsupported files are rejected before upload. The file limit is
+4 MB. If SmartCards returns an application rate limit, the page suggests a
+retry time when the browser can read `Retry-After`. Cross-origin responses
+that do not expose that header show a general wait message.
+
+Use Tab to reach study controls and Enter or Space to activate buttons.
+With a flashcard focused, use Left or Right Arrow to browse cards. Use the
+standard radio-button keys to select a quiz answer, then activate Submit.
+Escape closes the item-count and focus dialogs and returns focus to the
+control that opened them.

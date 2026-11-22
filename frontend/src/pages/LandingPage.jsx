@@ -101,9 +101,9 @@ const LandingPage = () => {
       {/* Benefit 4 */}
       <div className="text-center md:text-left">
         <ChartBarIcon className="w-10 h-10 mb-4"/>
-        <h3 className="font-semibold text-lg">Track Your Progress</h3>
+        <h3 className="font-semibold text-lg">Review Your Answers</h3>
         <p className="text-gray-500 mt-2">
-          Measure improvement over time and identify weak areas to focus your revision efforts.
+          Get immediate quiz feedback and review your score.
         </p>
       </div>
     </div>
@@ -182,23 +182,23 @@ const LandingPage = () => {
       </div>
       <div>
         <AcademicCapIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Proven Learning Methods</h3>
+        <h3 className="font-semibold text-lg mb-2">Practice Active Recall</h3>
         <p className="text-gray-500">
-          Uses active recall and spaced repetition techniques backed by science.
+          Try answering a flashcard before revealing the answer.
         </p>
       </div>
       <div>
         <LightBulbIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Smart AI</h3>
+        <h3 className="font-semibold text-lg mb-2">Study From Your Notes</h3>
         <p className="text-gray-500">
-          AI tailors flashcards and quizzes to highlight your weak spots.
+          Turn a supported document into flashcards or multiple-choice questions.
         </p>
       </div>
       <div>
         <GlobeAmericasIcon className="w-10 h-10 mb-4" />
         <h3 className="font-semibold text-lg mb-2">Learn Anywhere</h3>
         <p className="text-gray-500">
-          Access your study materials from any device, anytime.
+          Open SmartCards in your browser and upload a document to start studying.
         </p>
       </div>
     </div>

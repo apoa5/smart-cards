@@ -8,7 +8,7 @@ const Dashboard = () => {
       </header>
 
       <main className="text-center pt-10 px-6">
-        <h1 className="text-5xl font-serif text-semibold leading-tight mb-10">
+        <h1 className="text-3xl sm:text-5xl font-serif text-semibold leading-tight mb-10">
           Generate Flashcards and Quizzes
         </h1>
         <div>
