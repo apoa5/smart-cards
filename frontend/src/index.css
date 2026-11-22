@@ -395,3 +395,44 @@
   .study-content { padding-inline: 0; padding-bottom: 56px; }
   .study-content > .study-arrow { top: auto; bottom: 0; translate: none; }
 }
+
+.flashcard-viewport {
+  position: relative;
+  height: 300px;
+  isolation: isolate;
+  overflow: clip;
+  overflow-clip-margin: 12px;
+}
+
+.flashcard-slide,
+.flashcard-static,
+.flashcard-flip {
+  position: absolute;
+  inset: 0;
+}
+
+.flashcard-slide { perspective: 1200px; }
+.flashcard-flip { transform-style: preserve-3d; }
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 12px;
+  padding: clamp(16px, 3vw, 36px);
+  box-shadow: var(--shadow-paper);
+}
+
+.flashcard-flip .flashcard-face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.flashcard-answer { background: var(--color-sage-paper); }
+.flashcard-flip .flashcard-answer { transform: rotateY(180deg); }
+
+.study-focus-dialog::backdrop {
+  background-color: rgb(39 43 40 / 70%);
+  backdrop-filter: blur(8px);
+}

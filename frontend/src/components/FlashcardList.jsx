@@ -1,15 +1,42 @@
 import { useState } from "react";
+import { AnimatePresence, LazyMotion, domAnimation, useReducedMotion } from "motion/react";
+import * as Motion from "motion/react-m";
 import { ArrowsPointingOutIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/solid";
-import StudyDialog from "./StudyDialog";
+import StudyDialog, { FocusModeClose } from "./StudyDialog";
 import { StudyArrows, StudyNumbers } from "./StudyNavigation";
 
-function CardView({ flashcards, index, revealed, onSelect, onFlip }) {
+const slide = {
+  enter: (direction) => ({ x: direction * 32, opacity: 0 }),
+  settled: { x: 0, opacity: 1 },
+  exit: (direction) => ({ x: direction * -32, opacity: 0 }),
+};
+const slideTiming = { duration: 0.24, ease: "easeOut" };
+const flipTiming = { duration: 0.46, ease: "easeInOut" };
+
+function CardFace({ card, answer = false }) {
+  return (
+    <span className={`flashcard-face ${answer ? "flashcard-answer" : "bg-paper"}`}>
+      <span className="flex min-h-full flex-col justify-center wrap-anywhere">
+        {answer ? (
+          <span className="text-lg text-ink-secondary sm:text-xl">{card.answer}</span>
+        ) : (
+          <>
+            <span className="mb-5 block text-xl font-semibold text-ink sm:text-[1.65rem] sm:leading-snug">{card.question}</span>
+            <span className="text-sm font-medium text-accent-ink underline decoration-rule-strong underline-offset-4">Reveal the answer</span>
+          </>
+        )}
+      </span>
+    </span>
+  );
+}
+
+function CardView({ flashcards, index, direction, revealed, onSelect, onFlip, reduceMotion }) {
   const card = flashcards[index];
   return (
     <div className="w-full max-w-lg">
       <div className="study-content relative px-[3.15rem] sm:px-14">
         <StudyArrows index={index} total={flashcards.length} onSelect={onSelect} item="card" />
-        <div className="relative h-[300px] isolate">
+        <div className="flashcard-viewport">
           {flashcards.slice(index + 1, index + 3).map((_, position) => (
             <div key={position} aria-hidden="true"
               className="absolute inset-0 rounded-xl border border-rule bg-paper-alt opacity-75"
@@ -23,21 +50,33 @@ function CardView({ flashcards, index, revealed, onSelect, onFlip }) {
               } else if (event.key === "ArrowRight" && index < flashcards.length - 1) {
                 event.preventDefault();
                 onSelect(index + 1);
+              } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                const side = revealed ? ".flashcard-answer" : ".flashcard-face:not(.flashcard-answer)";
+                const face = event.currentTarget.querySelector(side);
+                if (face && face.scrollHeight > face.clientHeight) {
+                  event.preventDefault();
+                  face.scrollTop += event.key === "ArrowDown" ? 48 : -48;
+                }
               }
             }}
             aria-label={revealed ? `Show question. Answer: ${card.answer}` : `Reveal answer. Question: ${card.question}`}
-            className={`relative z-10 block h-full w-full cursor-pointer overflow-y-auto rounded-xl border border-rule-strong p-4 shadow-paper transition-colors duration-150 sm:p-9 ${
-              revealed ? "bg-sage-paper" : "bg-paper"
-            }`}>
-            {revealed ? (
-              <span aria-hidden="true" className="flex min-h-full flex-col justify-center wrap-anywhere text-lg text-ink-secondary sm:text-xl">
-                {card.answer}
+            className="relative z-10 block h-full w-full cursor-pointer rounded-xl">
+            {reduceMotion ? (
+              <span aria-hidden="true" className="flashcard-static">
+                <CardFace card={card} answer={revealed} />
               </span>
             ) : (
-              <span aria-hidden="true" className="flex min-h-full flex-col justify-center">
-                <span className="mb-5 block wrap-anywhere text-xl font-semibold text-ink sm:text-[1.65rem] sm:leading-snug">{card.question}</span>
-                <span className="text-sm font-medium text-accent-ink underline decoration-rule-strong underline-offset-4">Reveal the answer</span>
-              </span>
+              <AnimatePresence initial={false} mode="wait" custom={direction}>
+                <Motion.span key={card.question} aria-hidden="true" className="flashcard-slide"
+                  custom={direction} variants={slide} initial="enter" animate="settled" exit="exit"
+                  transition={slideTiming}>
+                  <Motion.span className="flashcard-flip" initial={false}
+                    animate={{ rotateY: revealed ? 180 : 0 }} transition={flipTiming}>
+                    <CardFace card={card} />
+                    <CardFace card={card} answer />
+                  </Motion.span>
+                </Motion.span>
+              </AnimatePresence>
             )}
           </button>
         </div>
@@ -50,19 +89,22 @@ function CardView({ flashcards, index, revealed, onSelect, onFlip }) {
   );
 }
 
-export default function FlashcardList({ flashcards }) {
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
+function Deck({ flashcards }) {
+  const [{ index, direction, revealed }, setCard] = useState({ index: 0, direction: 1, revealed: false });
   const [focusMode, setFocusMode] = useState(false);
-  if (!flashcards.length) return null;
+  const reduceMotion = useReducedMotion();
 
   function select(position) {
-    setIndex(position);
-    setRevealed(false);
+    setCard((current) => ({
+      index: position,
+      direction: Math.sign(position - current.index) || current.direction,
+      revealed: false,
+    }));
   }
 
-  const view = <CardView flashcards={flashcards} index={index} revealed={revealed}
-    onSelect={select} onFlip={() => setRevealed((showing) => !showing)} />;
+  const view = <CardView flashcards={flashcards} index={index} direction={direction}
+    revealed={revealed} reduceMotion={reduceMotion} onSelect={select}
+    onFlip={() => setCard((current) => ({ ...current, revealed: !current.revealed }))} />;
   const navigation = <StudyNumbers index={index} total={flashcards.length} onSelect={select} item="card" />;
   return (
     <section className="study-result">
@@ -82,14 +124,20 @@ export default function FlashcardList({ flashcards }) {
         </div>
       </div>
       {focusMode && (
-        <StudyDialog title="Flashcard focus mode" onDismiss={() => setFocusMode(false)} className="w-full sm:w-[36rem]">
-          <button type="button" data-initial-focus onClick={() => setFocusMode(false)}
-            className="editorial-secondary-button mb-4">
-            Close focus mode
-          </button>
+        <StudyDialog title="Flashcard focus mode" onDismiss={() => setFocusMode(false)} className="study-focus-dialog w-full sm:w-[36rem]">
+          <FocusModeClose onClick={() => setFocusMode(false)} />
           <div className="flex flex-col items-center gap-4">{view}{navigation}</div>
         </StudyDialog>
       )}
     </section>
+  );
+}
+
+export default function FlashcardList({ flashcards }) {
+  if (!flashcards.length) return null;
+  return (
+    <LazyMotion features={domAnimation}>
+      <Deck key={JSON.stringify(flashcards)} flashcards={flashcards} />
+    </LazyMotion>
   );
 }

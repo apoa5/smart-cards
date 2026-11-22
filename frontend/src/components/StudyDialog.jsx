@@ -1,4 +1,14 @@
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useId, useRef } from "react";
+
+export function FocusModeClose({ onClick }) {
+  return (
+    <button type="button" data-initial-focus aria-label="Close focus mode" onClick={onClick}
+      className="fixed top-4 right-4 z-20 grid size-11 cursor-pointer place-items-center rounded-lg border border-rule-strong bg-paper text-accent-ink shadow-paper hover:bg-accent-tint">
+      <XMarkIcon aria-hidden="true" className="size-6" />
+    </button>
+  );
+}
 
 export default function StudyDialog({ title, onDismiss, children, className = "" }) {
   const ref = useRef(null);

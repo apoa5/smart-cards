@@ -142,6 +142,10 @@ export default function FileUploader({ onTextExtracted }) {
         </div>
         <p ref={statusRegion} role="status" tabIndex={-1}
           className={announcement ? "study-notice" : "sr-only"}>
+          {pending && (
+            <span aria-hidden="true"
+              className="me-2.5 inline-block size-4 rounded-full border-2 border-accent/30 border-t-accent-ink align-[-0.15em] motion-safe:animate-spin" />
+          )}
           {announcement}
         </p>
         {error && <p role="alert" className="study-notice study-notice-error">{error}</p>}

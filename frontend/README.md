@@ -155,3 +155,8 @@ and a muted ink palette. The bundled Latin subsets of DM Serif Display and
 Inter live in `src/assets/fonts/` with licenses in `public/font-licenses/`. Other characters use the
 system font fallbacks. Study controls keep the existing keyboard interactions
 and honor reduced-motion preferences.
+
+Flashcards use a 460 ms Y-axis reveal and a 240 ms slide and fade in each
+directional phase. A new card opens on its question side. With reduced
+motion enabled, both navigation and reveal switch instantly. The same
+controls apply in focus mode.

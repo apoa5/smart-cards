@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { ArrowsPointingOutIcon, ArrowPathIcon, BookOpenIcon } from "@heroicons/react/24/solid";
-import StudyDialog from "./StudyDialog";
+import StudyDialog, { FocusModeClose } from "./StudyDialog";
 import { StudyArrows, StudyNumbers } from "./StudyNavigation";
 
 function QuestionView({ quiz, index, selected, answer, onSelect, onChange, onSubmit }) {
@@ -116,11 +116,8 @@ export default function QuizList({ quiz }) {
         </div>
       )}
       {focusMode && (
-        <StudyDialog title="Quiz focus mode" onDismiss={() => setFocusMode(false)} className="w-full sm:w-[44rem]">
-          <button type="button" data-initial-focus onClick={() => setFocusMode(false)}
-            className="editorial-secondary-button mb-4">
-            Close focus mode
-          </button>
+        <StudyDialog title="Quiz focus mode" onDismiss={() => setFocusMode(false)} className="study-focus-dialog w-full sm:w-[44rem]">
+          <FocusModeClose onClick={() => setFocusMode(false)} />
           <div className="flex flex-col items-center gap-4">{view}{navigation}</div>
         </StudyDialog>
       )}
