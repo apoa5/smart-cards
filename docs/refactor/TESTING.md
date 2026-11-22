@@ -56,3 +56,9 @@ On Node 22.23.3 and Python 3.12.3, the backend suite passed all 15 tests and
 in `AuthContext.jsx` recorded in [Step 01](BASELINE.md). With the mocked
 Supabase session, confirmed logout reached `/login` despite the dashboard's
 request to navigate to `/`. Step 04 removed the obsolete auth code.
+
+## Groq evaluation
+
+The [evaluation guide](../evaluation/README.md) describes the synthetic
+corpus, plan-only command, opt-in live batch, and human review rubric.
+The normal backend suite uses mocked transport to verify evaluation behavior.

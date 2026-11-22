@@ -8,13 +8,15 @@ GROQ_DEFAULT_MODEL = "openai/gpt-oss-20b"
 
 
 class GroqProvider:
-    def __init__(self, api_key: str, model: str = GROQ_DEFAULT_MODEL):
+    def __init__(self, api_key: str, model: str = GROQ_DEFAULT_MODEL, *, client_factory=None):
         self._api_key = api_key
         self.model = model
+        self._client_factory = client_factory
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
         try:
-            with OpenAI(
+            client_factory = self._client_factory or OpenAI
+            with client_factory(
                 api_key=self._api_key, base_url=GROQ_BASE_URL, timeout=30.0, max_retries=0
             ) as client:
                 response = client.chat.completions.create(
