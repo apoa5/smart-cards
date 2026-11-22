@@ -25,10 +25,11 @@ class GroqEvaluationTests(unittest.TestCase):
     @patch("evaluation.groq_eval.run_case")
     def test_dry_run_and_missing_credentials_never_call_groq(self, run_case):
         with patch.dict(os.environ, {}, clear=True), redirect_stdout(io.StringIO()) as output:
-            self.assertEqual(groq_eval.main(["--budget", "1"]), 0)
+            self.assertEqual(groq_eval.main(["--budget", "1", "--prompt-version", "revised"]), 0)
             with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as failure:
                 groq_eval.main(["--live", "--budget", "1"])
         self.assertEqual(failure.exception.code, 2)
+        self.assertIn("Prompt version: revised", output.getvalue())
         self.assertIn("Planned requests: 1", output.getvalue())
         self.assertIn("algorithms / flashcards / 5", output.getvalue())
         run_case.assert_not_called()
@@ -44,9 +45,10 @@ class GroqEvaluationTests(unittest.TestCase):
         }
         with patch.dict(os.environ, {"GROQ_API_KEY": "synthetic"}, clear=True):
             with redirect_stdout(io.StringIO()):
-                self.assertEqual(groq_eval.main(["--live", "--budget", "2"]), 1)
-        run_case.assert_called_once()
+                self.assertEqual(groq_eval.main(["--live", "--budget", "2", "--prompt-version", "revised"]), 1)
+        run_case.assert_called_once_with(case, "synthetic", "openai/gpt-oss-20b", prompt_version="revised")
         report = (report_dir / "filename").write_text.call_args.args[0]
+        self.assertIn("Prompt version: `revised`", report)
         self.assertIn("HTTP 429 responses: 1", report)
         self.assertIn("Cases skipped", report)
         self.assertIn("plant-cells / quiz / 5", report)

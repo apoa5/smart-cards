@@ -62,3 +62,13 @@ request to navigate to `/`. Step 04 removed the obsolete auth code.
 The [evaluation guide](../evaluation/README.md) describes the synthetic
 corpus, plan-only command, opt-in live batch, and human review rubric.
 The normal backend suite uses mocked transport to verify evaluation behavior.
+
+
+## API usage controls
+
+The rate-limit tests use two independent Flask application instances and a
+mocked shared Redis REST service with a deterministic server clock. They
+cover shared generation budgets, independent upload and client budgets,
+reset timing, global limits, trusted identity, and fail-closed behavior.
+See the [deployment checks](API_USAGE_CONTROLS.md#before-enabling-public-traffic)
+for verification against real infrastructure.

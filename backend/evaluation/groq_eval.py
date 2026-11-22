@@ -17,6 +17,7 @@ from openai import DefaultHttpxClient, OpenAI
 from app.ai import generate_flashcards, generate_quiz_questions
 from app.ai_errors import GenerationError
 from app.groq_provider import GROQ_DEFAULT_MODEL, GroqProvider
+from app.study_prompts import PROMPT_VERSIONS
 from app.study_response import decode_study_response
 
 from .corpus import PASSAGES, Passage
@@ -108,7 +109,7 @@ def structural_metrics(content, case):
     return len(items), duplicates, mappings
 
 
-def run_case(case, key, model, *, http_client_factory=DefaultHttpxClient):
+def run_case(case, key, model, *, prompt_version="original", http_client_factory=DefaultHttpxClient):
     observation = Observation()
 
     def client_factory(**options):
@@ -122,7 +123,9 @@ def run_case(case, key, model, *, http_client_factory=DefaultHttpxClient):
     start = perf_counter()
     items, error = None, None
     try:
-        items = GENERATORS[case.kind](case.passage.text, case.count, provider=provider)
+        items = GENERATORS[case.kind](
+            case.passage.text, case.count, provider=provider, prompt_version=prompt_version,
+        )
     except GenerationError as failure:
         error = failure.code
     latency = perf_counter() - start
@@ -135,7 +138,7 @@ def run_case(case, key, model, *, http_client_factory=DefaultHttpxClient):
     }
 
 
-def render_report(model, started, results, skipped):
+def render_report(model, started, results, skipped, *, prompt_version="original"):
     def show(value):
         return "—" if value is None else str(value)
 
@@ -148,6 +151,7 @@ def render_report(model, started, results, skipped):
         "# Groq evaluation run", "",
         f"- Started (UTC): {started.isoformat()}",
         f"- Model: `{model}`",
+        f"- Prompt version: `{prompt_version}`",
         f"- Requests attempted: {len(results)} of {len(results) + len(skipped)} planned",
         f"- HTTP 2xx: {http_successes}/{len(results)}",
         f"- Validated outputs: {valid}/{len(results)}",
@@ -198,6 +202,7 @@ def main(argv=None):
     parser.add_argument("--budget", type=int, default=MAX_REQUESTS, choices=range(1, MAX_REQUESTS + 1))
     parser.add_argument("--offset", type=int, default=0, help="Zero-based case offset for a later batch.")
     parser.add_argument("--model", default=os.getenv("AI_MODEL", "").strip() or GROQ_DEFAULT_MODEL)
+    parser.add_argument("--prompt-version", choices=PROMPT_VERSIONS, default="original")
     args = parser.parse_args(argv)
     cases = evaluation_cases()
     if not 0 <= args.offset < len(cases):
@@ -206,7 +211,8 @@ def main(argv=None):
     if not args.model or any(not (char.isascii() and (char.isalnum() or char in "-_./")) for char in args.model):
         parser.error("--model must be a Groq model identifier")
     selected = cases[args.offset:args.offset + args.budget]
-    print(f"Groq model: {args.model}\nPlanned requests: {len(selected)}", flush=True)
+    print(f"Groq model: {args.model}\nPrompt version: {args.prompt_version}", flush=True)
+    print(f"Planned requests: {len(selected)}", flush=True)
     for case in selected:
         print(f"- {case.label}", flush=True)
     if not args.live:
@@ -219,7 +225,7 @@ def main(argv=None):
     started = datetime.now(timezone.utc)
     results = []
     for case in selected:
-        row = run_case(case, key, args.model)
+        row = run_case(case, key, args.model, prompt_version=args.prompt_version)
         results.append(row)
         if row["http"] == 429 or row["error"] in {
             "invalid_api_key", "missing_api_key", "model_access", "rate_limited", "insufficient_quota",
@@ -227,7 +233,10 @@ def main(argv=None):
             break
     path = REPORT_DIR / f"groq-{started.strftime('%Y%m%dT%H%M%S%fZ')}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(args.model, started, results, selected[len(results):]), encoding="utf-8")
+    report = render_report(
+        args.model, started, results, selected[len(results):], prompt_version=args.prompt_version,
+    )
+    path.write_text(report, encoding="utf-8")
     print(f"Evaluation report: {path}")
     return int(any(row["error"] for row in results))
 

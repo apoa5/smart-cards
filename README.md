@@ -201,6 +201,10 @@ array contains exactly the requested number of items.
 | 413 | File or generation text exceeds its limit, or Flask rejects the request body above 4,100,000 bytes |
 | 415 | Generation request uses a non-JSON content type |
 
+SmartCards may return HTTP 429 with `code: rate_limited` and a
+`Retry-After` header when an application request budget is exhausted.
+See [anonymous API usage controls](docs/refactor/API_USAGE_CONTROLS.md).
+
 Input errors use `{"error":"..."}`. Classified generation failures retain
 their existing HTTP status and `{"error":"...","code":"..."}` response.
 Malformed, truncated, or invalid model output returns HTTP 502 with
@@ -221,7 +225,7 @@ npm run preview   # Preview the production build locally
 
 Deploy the repository as two Vercel projects:
 
-1. Create a backend project with `backend` as its Root Directory. Set `CORS_ORIGINS` and follow the inference configuration above for generation.
+1. Create a backend project with `backend` as its Root Directory. Set `CORS_ORIGINS` and configure Groq and the [required shared rate limiter](docs/refactor/API_USAGE_CONTROLS.md) before deploying the backend.
 2. Create a frontend project with `frontend` as its Root Directory. Add `VITE_API_BASE_URL`, then deploy it.
 3. Set `VITE_API_BASE_URL` to the deployed backend URL and `CORS_ORIGINS` to the deployed frontend URL. Redeploy after changing environment variables.
 

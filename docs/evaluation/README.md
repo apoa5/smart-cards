@@ -106,3 +106,9 @@ Sampling varies across generations, and free-tier throttling or changing
 model availability can affect results. If later runs reveal issues, record
 whether they involve truncation, unsupported facts, or repeated concepts
 before considering changes to prompts, output limits, or structured output.
+
+## Prompt comparison
+
+The [paired comparison guide](PROMPT_COMPARISON.md) documents the original
+defects, the revised prompt option, and a blind review procedure. The
+original live report remains the historical baseline.

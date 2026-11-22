@@ -21,9 +21,9 @@ def _generate(prompts, count, validate, provider):
         raise failure from None
 
 
-def generate_flashcards(text, count=5, *, provider=None):
-    return _generate(flashcard_prompts(text, count), count, validate_flashcards, provider)
+def generate_flashcards(text, count=5, *, provider=None, prompt_version="original"):
+    return _generate(flashcard_prompts(text, count, version=prompt_version), count, validate_flashcards, provider)
 
 
-def generate_quiz_questions(text, count=5, *, provider=None):
-    return _generate(quiz_prompts(text, count), count, validate_quiz, provider)
+def generate_quiz_questions(text, count=5, *, provider=None, prompt_version="original"):
+    return _generate(quiz_prompts(text, count, version=prompt_version), count, validate_quiz, provider)
