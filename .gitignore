@@ -23,14 +23,19 @@ dist-ssr
 *.sln
 *.sw?
 
-#  Python virtual environment
+# Python environments, caches, and coverage
 venv/
+.venv/
 __pycache__/
 *.py[cod]
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
 
+# Local deployment state and environment settings
+.vercel/
 .env
+.env.*
+!.env.example

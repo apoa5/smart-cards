@@ -42,6 +42,21 @@ the existing Vite configuration. The tests use a separate Vitest configuration.
   payloads, flashcard review, and quiz answer feedback. The study tests mock the
   Axios client module.
 
+## What has been verified
+
+| Type | Evidence | Scope |
+| --- | --- | --- |
+| Backend unit tests | Python unittest | Input, parser, schema, and error-handling cases |
+| Mocked integration | Flask test client, in-memory HTTP transport, shared Redis fake | Route contracts, provider calls, cross-instance counter behavior and failure responses |
+| Frontend automation | Vitest and React Testing Library in jsdom | Public routes, pending requests, stale-response handling, keyboard actions and dialog focus with a test shim |
+| Local preview | Step 04 loopback preview served the SPA entry point for the dashboard and legacy URLs | Local HTTP routing only |
+| Live inference | Original Groq batch completed 6/6 cases; the revised batch returned 1/6 | Synthetic inference only, outside the normal test suite |
+| Pending | Real Vercel ingress and Upstash, sustained provider availability, mobile browser and assistive-technology checks | See the [release checklist](RELEASE_CHECKLIST.md) |
+
+The [evaluation reports](../evaluation/README.md) preserve the live results.
+Assistant assessments and automated validation are recorded separately.
+Independent human quality review remains pending.
+
 ## Pre-existing failures and gaps
 
 - Backend runs may emit expected parser and provider error logs and the
