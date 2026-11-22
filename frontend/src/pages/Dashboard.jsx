@@ -1,22 +1,17 @@
+import EditorialHeader from "../components/EditorialHeader";
 import FileUploader from "../components/FileUploader";
 
-const Dashboard = () => {
+export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <header className="flex justify-between px-8 py-6 max-w-7xl mx-auto">
-        <div className="text-xl font-bold flex-shrink-0">SmartCards</div>
-      </header>
-
-      <main className="text-center pt-10 px-6">
-        <h1 className="text-3xl sm:text-5xl font-serif text-semibold leading-tight mb-10">
-          Generate Flashcards and Quizzes
-        </h1>
-        <div>
-          <FileUploader />
-        </div>
+    <>
+      <EditorialHeader />
+      <main className="editorial-shell editorial-workspace" id="main-content">
+        <header className="editorial-workspace-heading">
+          <h1 className="editorial-section-title">Generate Flashcards and Quizzes</h1>
+          <p>Upload a document, then choose how to practice.</p>
+        </header>
+        <FileUploader />
       </main>
-    </div>
+    </>
   );
-};
-
-export default Dashboard;
+}

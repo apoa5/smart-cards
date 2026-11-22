@@ -6,7 +6,7 @@ import FlashcardList from "./FlashcardList";
 import QuizList from "./QuizList";
 import StudyDialog from "./StudyDialog";
 
-const actionStyle = "rounded-2xl bg-gray-700 px-4 py-4 text-white transition enabled:cursor-pointer enabled:hover:bg-gray-900 disabled:opacity-50";
+const actionStyle = "editorial-secondary-button study-mode-action";
 const labels = { flashcards: "flashcards", quiz: "quiz questions" };
 
 export default function FileUploader({ onTextExtracted }) {
@@ -124,58 +124,70 @@ export default function FileUploader({ onTextExtracted }) {
 
   return (
     <>
-      <section className="mx-auto mt-10 max-w-2xl rounded-2xl border border-gray-500 bg-white p-5 text-center shadow-lg sm:p-8">
-        <div className="mb-4 flex items-center justify-center gap-2">
-          <CloudArrowUpIcon aria-hidden="true" className="h-8 w-8" />
-          <h2 className="text-xl font-semibold text-gray-700">Upload here</h2>
+      <section className="document-panel" aria-labelledby="document-title">
+        <div className="document-panel-main">
+          <div className="document-panel-copy">
+            <span className="document-icon"><CloudArrowUpIcon aria-hidden="true" /></span>
+            <div>
+              <h2 id="document-title">Your study document</h2>
+              <p>TXT, PDF, DOCX, or PPTX · Maximum 4 MB</p>
+            </div>
+          </div>
+          <input ref={input} type="file" aria-label="Study document"
+            accept=".txt,.pdf,.docx,.pptx" className="hidden" onChange={selectFile} />
+          <button ref={chooseButton} type="button" onClick={() => input.current?.click()}
+            className={document ? "editorial-secondary-button" : "editorial-button"}>
+            {document ? "Replace file" : "Choose File"}
+          </button>
         </div>
-        <input ref={input} type="file" aria-label="Study document"
-          accept=".txt,.pdf,.docx,.pptx" className="hidden" onChange={selectFile} />
-        <button ref={chooseButton} type="button" onClick={() => input.current?.click()}
-          className="cursor-pointer rounded-full bg-gray-700 px-8 py-3 text-white transition hover:bg-gray-900">
-          {document ? "Replace file" : "Choose File"}
-        </button>
-        <p className="mt-3 text-sm text-gray-600">TXT, PDF, DOCX, or PPTX · Maximum 4 MB</p>
         <p ref={statusRegion} role="status" tabIndex={-1}
-          className={announcement ? "mt-3 text-sm text-gray-700" : "sr-only"}>
+          className={announcement ? "study-notice" : "sr-only"}>
           {announcement}
         </p>
-        {error && <p role="alert" className="mt-3 text-red-700">{error}</p>}
+        {error && <p role="alert" className="study-notice study-notice-error">{error}</p>}
 
         {document && (
-          <>
-            {document.text && (
-              <p className="mt-3 wrap-anywhere text-lime-900">
-                📄 {document.name} uploaded ({document.wordCount} words)
-              </p>
-            )}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-              {document.text && (
-                <>
-                  <button type="button" className={actionStyle} disabled={Boolean(pending)}
-                    aria-haspopup="dialog" onClick={() => setPicker("flashcards")}>
-                    Generate Flashcards
-                  </button>
-                  <button type="button" className={actionStyle} disabled={Boolean(pending)}
-                    aria-haspopup="dialog" onClick={() => setPicker("quiz")}>
-                    Generate Quiz
-                  </button>
-                </>
-              )}
-              <button type="button" aria-label="Remove document"
-                className="cursor-pointer rounded-lg p-2 text-red-600 transition hover:bg-red-50 hover:text-red-800"
-                onClick={() => {
-                  clearDocument();
-                  chooseButton.current?.focus();
-                }}>
-                <TrashIcon aria-hidden="true" className="h-7 w-7" />
-              </button>
-            </div>
-          </>
+          <div className="document-summary">
+            <p className="min-w-0 wrap-anywhere">
+              {document.name}
+              {document.text && <> uploaded ({document.wordCount} words)</>}
+            </p>
+            <button type="button" aria-label="Remove document" className="document-remove"
+              onClick={() => {
+                clearDocument();
+                chooseButton.current?.focus();
+              }}>
+              <TrashIcon aria-hidden="true" /> <span>Remove</span>
+            </button>
+          </div>
         )}
       </section>
 
-      <div className="mt-12 pb-10" aria-busy={Boolean(pending)}>
+      {document?.text && (
+        <section className="study-modes" aria-labelledby="study-modes-title">
+          <h2 id="study-modes-title">Choose a study format</h2>
+          <div className="study-modes-grid">
+            <div>
+              <p className="study-mode-title">Flashcards</p>
+              <p>Recall an answer, then turn over the card to check it.</p>
+              <button type="button" className={actionStyle} disabled={Boolean(pending)}
+                aria-haspopup="dialog" onClick={() => setPicker("flashcards")}>
+                Generate Flashcards
+              </button>
+            </div>
+            <div>
+              <p className="study-mode-title">Quiz</p>
+              <p>Choose an answer and get feedback on each question.</p>
+              <button type="button" className={actionStyle} disabled={Boolean(pending)}
+                aria-haspopup="dialog" onClick={() => setPicker("quiz")}>
+                Generate Quiz
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <div className="study-results" aria-busy={Boolean(pending)}>
         {flashcards.length > 0 && <FlashcardList flashcards={flashcards} />}
         {quiz.length > 0 && <QuizList quiz={quiz} />}
       </div>
@@ -186,13 +198,13 @@ export default function FileUploader({ onTextExtracted }) {
             {[5, 10, 15].map((count, index) => (
               <button key={count} type="button" data-initial-focus={index === 0 ? "" : undefined}
                 onClick={() => generate(count)}
-                className="cursor-pointer rounded-lg bg-gray-700 px-4 py-2 text-white hover:bg-gray-900">
+                className="editorial-button">
                 {count}
               </button>
             ))}
           </div>
           <button type="button" onClick={() => setPicker("")}
-            className="mt-4 w-full cursor-pointer rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">
+            className="editorial-secondary-button mt-4 w-full">
             Cancel
           </button>
         </StudyDialog>

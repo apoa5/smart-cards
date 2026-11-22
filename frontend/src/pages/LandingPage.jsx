@@ -1,241 +1,88 @@
 import { Link } from "react-router-dom";
-import LandingImage from "../assets/images/landing-page-image.jpg";
-import {
-  CloudArrowUpIcon,
-  CpuChipIcon,
-  BookOpenIcon,
-  ClockIcon,
-  AcademicCapIcon,
-  LightBulbIcon,
-  GlobeAmericasIcon,
-  BoltIcon,
-  ChartBarIcon
-} from "@heroicons/react/24/outline";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
+import EditorialHeader from "../components/EditorialHeader";
 
-const LandingPage = () => {
+const steps = [
+  { title: "Upload your notes", detail: "Choose a TXT, PDF, DOCX, or PPTX file up to 4 MB." },
+  { title: "Choose a format", detail: "Generate 5, 10, or 15 flashcards or multiple-choice questions." },
+  { title: "Review and practice", detail: "Reveal answers at your own pace or check your understanding with a quiz." },
+];
+
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
-      {/* Navbar */}
-      <header className="flex justify-between px-8 py-6 max-w-7xl mx-auto">
-        {/* Left: Logo */}
-        <div className="text-xl font-bold flex-shrink-0">SmartCards</div>
-
-        {/* Center: Nav Links */}
-<nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex justify-center space-x-10 text-sm font-medium bg-gray-200/60 rounded-full px-5 py-4 backdrop-blur-md">
-          <a href="#benefits" className="hover:text-lime-900">Benefits</a>
-          <a href="#how-it-works" className="hover:text-lime-900">How-to</a>
-          <a href="#why-choose-us" className="hover:text-lime-900">Why us?</a>
-          <a href="#contact-us" className="hover:text-lime-900">Contact Us</a>
-        </nav>
-
-        {/* Right: CTA Button */}
-        <Link
-          to="/dashboard"
-          className="bg-lime-900 text-white text-sm px-5 py-3 rounded-full font-semibold hover:bg-lime-950 transition"
-        >
-          Get started →
-        </Link>
-      </header>
-
-      {/* Hero Section */}
-      <main className="text-center pt-20 px-6">
-        <h1 className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-10">
-          Study Smarter with AI<span className="text-black">.</span>
-        </h1>
-
-        {/* Device Image Preview */}
-        <div className="relative mt-8 max-w-5xl mx-auto">
-
-          {/* Image Container */}
-          <div className="rounded-[2rem] overflow-hidden shadow-xl border-1 border-lime-900 mb-20">
-            <img
-              src={LandingImage} // Replace with your actual image
-              alt="Student studying"
-              className="w-full max-w-3xl h-auto object-cover"
-            />
+    <>
+      <EditorialHeader landing />
+      <main id="main-content">
+        <section className="editorial-shell editorial-hero" aria-labelledby="hero-title">
+          <div>
+            <h1 id="hero-title" className="editorial-title">
+              A better way to study <em>what matters.</em>
+            </h1>
+            <p className="editorial-intro">
+              Turn a document into flashcards or a practice quiz. Upload your notes and start reviewing without an account.
+            </p>
+            <div className="editorial-hero-actions">
+              <Link to="/dashboard" className="editorial-button">
+                Get started <ArrowRightIcon aria-hidden="true" />
+              </Link>
+              <a href="#how-it-works" className="editorial-text-link">How it works</a>
+            </div>
           </div>
-        </div>
+          <div className="editorial-illustration" aria-hidden="true">
+            <div className="editorial-sample-document">
+              <span className="editorial-label">Study notes</span>
+              <span className="editorial-sample-title">Ecology</span>
+              <span className="editorial-sample-rules" />
+            </div>
+            <div className="editorial-sample-card">
+              <span className="editorial-label">Flashcard</span>
+              <span className="editorial-sample-question">What do decomposers do?</span>
+              <span className="editorial-sample-answer">They break down organic matter and help recycle nutrients.</span>
+            </div>
+          </div>
+        </section>
 
-        <hr className="border-t border-gray-300"/>
+        <section id="how-it-works" className="editorial-shell editorial-section">
+          <h2 className="editorial-section-title">How it works</h2>
+          <ol className="editorial-steps">
+            {steps.map(({ title, detail }, index) => (
+              <li key={title}>
+                <span aria-hidden="true" className="editorial-step-number">{String(index + 1).padStart(2, "0")}</span>
+                <h3>{title}</h3>
+                <p>{detail}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-        <section id="benefits" className="py-10">
-          {/* Section title */}
-  <div className="max-w-7xl mx-auto px-6 text-left">
-    <p className="text-lime-900 font-bold mb-8">Benefits</p>
-    <h2 className="text-5xl font-serif font-semi-bold mb-8">Smarter studying, simplified.</h2>
-    <p className="text-gray-500 mb-12">
-      Our AI-powered flashcard and quiz generator transforms your study materials into interactive learning tools — saving you time and helping you retain more.
-    </p>
-  </div>
-
-  <div className="max-w-7xl mx-auto px-6 text-left">
-    {/* Benefits grid */}
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-      {/* Benefit 1 */}
-      <div className="text-center md:text-left">
-        <BoltIcon className="w-10 h-10 mb-4"/>
-        <h3 className="font-semibold text-lg">Instant Content Conversion</h3>
-        <p className="text-gray-500 mt-2">
-          Upload your PDFs or notes and instantly get high-quality flashcards and quizzes generated by AI.
-        </p>
-      </div>
-
-      {/* Benefit 2 */}
-      <div className="text-center md:text-left">
-        <AcademicCapIcon className="w-10 h-10 mb-4"/>
-        <h3 className="font-semibold text-lg">Boost Retention</h3>
-        <p className="text-gray-500 mt-2">
-          Reinforce your learning through interactive recall practice — proven to improve long-term memory.
-        </p>
-      </div>
-
-      {/* Benefit 3 */}
-      <div className="text-center md:text-left">
-        <ClockIcon className="w-10 h-10 mb-4"/>
-        <h3 className="font-semibold text-lg">Save Study Time</h3>
-        <p className="text-gray-500 mt-2">
-          Skip the manual work of creating study tools and focus on what matters most — learning.
-        </p>
-      </div>
-
-      {/* Benefit 4 */}
-      <div className="text-center md:text-left">
-        <ChartBarIcon className="w-10 h-10 mb-4"/>
-        <h3 className="font-semibold text-lg">Review Your Answers</h3>
-        <p className="text-gray-500 mt-2">
-          Get immediate quiz feedback and review your score.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr className="border-t border-gray-300"/>
-
-{/* How It Works Section */}
-<section id="how-it-works" className="py-10">
-  <div className="max-w-7xl mx-auto px-6 text-left">
-    {/* Section Header */}
-    <p className="text-lime-900 font-bold mb-8">How it Works</p>
-    <h2 className="text-5xl font-semi-bold font-serif mb-8">
-      From upload to study-ready in seconds.
-    </h2>
-    <p className="text-gray-500 mb-12">
-      We’ve simplified the learning process so you can spend less time preparing
-      and more time mastering your material.
-    </p>
-
-    {/* Steps Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-      <div>
-        <CloudArrowUpIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">1. Upload Your File</h3>
-        <p className="text-gray-500">
-          Drag and drop your PDF or text file into our platform — no formatting
-          needed.
-        </p>
-      </div>
-      <div>
-        <CpuChipIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">2. AI Processes Content</h3>
-        <p className="text-gray-500">
-          Our AI analyzes your material, identifies key points, and creates
-          flashcards and quizzes instantly.
-        </p>
-      </div>
-      <div>
-        <BookOpenIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">3. Start Learning</h3>
-        <p className="text-gray-500">
-          Test your knowledge with quizzes or review flashcards anytime, on any
-          device.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr className="border-t border-gray-300"/>
-
-
-{/* Why Choose Us Section */}
-<section id="why-choose-us" className="py-10 bg-white">
-  <div className="max-w-7xl mx-auto px-6 text-left">
-    {/* Section Header */}
-    <p className="text-lime-900 font-bold mb-8">Why Choose Us?</p>
-    <h2 className="text-5xl font-semi-bold font-serif mb-8">
-      Study better, not longer.
-    </h2>
-    <p className="text-gray-500 mb-12">
-      Our platform is designed for students, educators, and professionals who
-      want to maximize learning efficiency.
-    </p>
-
-    {/* Features Grid */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-      <div>
-        <ClockIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Save Time</h3>
-        <p className="text-gray-500">
-          No more manually creating study guides — get them instantly.
-        </p>
-      </div>
-      <div>
-        <AcademicCapIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Practice Active Recall</h3>
-        <p className="text-gray-500">
-          Try answering a flashcard before revealing the answer.
-        </p>
-      </div>
-      <div>
-        <LightBulbIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Study From Your Notes</h3>
-        <p className="text-gray-500">
-          Turn a supported document into flashcards or multiple-choice questions.
-        </p>
-      </div>
-      <div>
-        <GlobeAmericasIcon className="w-10 h-10 mb-4" />
-        <h3 className="font-semibold text-lg mb-2">Learn Anywhere</h3>
-        <p className="text-gray-500">
-          Open SmartCards in your browser and upload a document to start studying.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr className="bt border-gray-300"/>
-
-{/*Contact section */}
-<section id="contact-us" className="py-10">
-<div className="max-w-7xl mx-auto px-6 text-left">
-  <p className="text-lime-900 font-bold mb-8"> Contact</p> 
-  <h3 className="font-semibold text-lg mb-2">Email</h3>
-  <div className="mb-8">
-      <p className="text-gray-500">akwasipoku.oforiagyei@gmail.com</p>
-  </div>
-  <h3 className="font-semibold mb-2">Github</h3>
-  <div className="flex flex-col">
-    <a href="https://github.com/apoa5" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">apoa5</a>
-  </div>
-</div>
-
-</section>
-
-<hr className="border-t border-gray-300"/>
-
-
-</main>
-      
-      
-
-      {/* Footer */}
-      <footer className="text-center text-sm text-gray-500 py-10">
-        © {new Date().getFullYear()} SmartCards. All rights reserved.
+        <section id="benefits" className="editorial-practice">
+          <div className="editorial-shell editorial-practice-inner">
+            <div>
+              <h2 className="editorial-section-title">Two ways to practice.</h2>
+              <Link to="/dashboard" className="editorial-text-link">
+                Start studying <ArrowRightIcon aria-hidden="true" />
+              </Link>
+            </div>
+            <div id="why-choose-us" className="editorial-practice-list">
+              <div>
+                <h3>Flashcards</h3>
+                <p>Try to recall the answer before turning over each card. Use focus mode to review one card at a time.</p>
+              </div>
+              <div>
+                <h3>Quizzes</h3>
+                <p>Choose from four answers and get immediate feedback. Review your score at the end.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer id="contact-us" className="editorial-shell editorial-footer">
+        <span className="editorial-footer-brand">SmartCards</span>
+        <p>Check AI-generated answers against your source material.</p>
+        <a href="https://github.com/apoa5" target="_blank" rel="noopener noreferrer" className="editorial-text-link">
+          Contact on GitHub
+        </a>
       </footer>
-    </div>
+    </>
   );
-};
-
-export default LandingPage;
+}

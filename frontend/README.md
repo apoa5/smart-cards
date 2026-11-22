@@ -147,3 +147,11 @@ With a flashcard focused, use Left or Right Arrow to browse cards. Use the
 standard radio-button keys to select a quiz answer, then activate Submit.
 Escape closes the item-count and focus dialogs and returns focus to the
 control that opened them.
+
+## Editorial visual system
+
+The landing page and study workspace share warm paper surfaces, sage accents,
+and a muted ink palette. The bundled Latin subsets of DM Serif Display and
+Inter live in `src/assets/fonts/` with licenses in `public/font-licenses/`. Other characters use the
+system font fallbacks. Study controls keep the existing keyboard interactions
+and honor reduced-motion preferences.

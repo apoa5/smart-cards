@@ -11,9 +11,9 @@ function QuestionView({ quiz, index, selected, answer, onSelect, onChange, onSub
 
   return (
     <div className="w-full max-w-2xl">
-      <div className="relative px-10 sm:px-12">
+      <div className="study-content relative px-[3.15rem] sm:px-14">
         <StudyArrows index={index} total={quiz.length} onSelect={onSelect} item="question" />
-        <form className="min-h-[250px] rounded-2xl border border-gray-300 bg-white p-4 text-left text-gray-800 shadow-lg sm:px-8 sm:py-6"
+        <form className="min-h-[250px] rounded-xl border border-rule-strong bg-paper p-4 text-left text-ink shadow-paper sm:px-8 sm:py-6"
           onSubmit={(event) => {
             event.preventDefault();
             if (!selected || answered) return;
@@ -21,13 +21,13 @@ function QuestionView({ quiz, index, selected, answer, onSelect, onChange, onSub
             onSubmit();
           }}>
           <fieldset disabled={answered}>
-            <legend className="mb-4 wrap-anywhere text-lg font-semibold">Q{index + 1}: {question.question}</legend>
+            <legend className="mb-5 wrap-anywhere text-lg leading-snug font-semibold sm:text-xl">Q{index + 1}: {question.question}</legend>
             <div className="space-y-2">
               {question.options.map((option) => (
-                <label key={option} className="flex items-start gap-2 rounded py-1 wrap-anywhere">
+                <label key={option} className="quiz-option min-h-11 flex items-start gap-2 wrap-anywhere">
                   <input type="radio" name={group} value={option}
                     checked={(answer ?? selected) === option} onChange={() => onChange(option)}
-                    className="mt-1 h-4 w-4 shrink-0 accent-lime-900" />
+                    className="mt-1 h-4 w-4 shrink-0 accent-accent" />
                   <span>{option}</span>
                 </label>
               ))}
@@ -35,20 +35,20 @@ function QuestionView({ quiz, index, selected, answer, onSelect, onChange, onSub
           </fieldset>
           <div ref={feedback} role="status" tabIndex={-1}>
             {answered && (
-              <p className={`mt-4 font-medium ${answer === question.correct_answer ? "text-green-700" : "text-red-700"}`}>
+              <p className={`study-notice ${answer === question.correct_answer ? "study-notice-success" : "study-notice-error"}`}>
                 {answer === question.correct_answer ? "Correct!" : `Wrong! Correct answer: ${question.correct_answer}`}
               </p>
             )}
           </div>
           {!answered && (
             <button type="submit" disabled={!selected}
-              className="mt-6 w-full rounded-lg bg-gray-300 py-2 font-medium text-gray-800 enabled:cursor-pointer enabled:hover:bg-gray-400 disabled:opacity-50">
+              className="editorial-button mt-6 w-full">
               Submit
             </button>
           )}
         </form>
       </div>
-      <p role="status" className="mt-4 text-center text-sm text-gray-600">
+      <p role="status" className="mt-4 text-center text-sm text-ink-muted">
         Question {index + 1} of {quiz.length}
         <span className="sr-only">. {question.question}</span>
       </p>
@@ -88,10 +88,10 @@ export default function QuizList({ quiz }) {
   const navigation = <StudyNumbers index={index} total={quiz.length} onSelect={select} item="question" />;
 
   return (
-    <section className="mt-10 border-t border-gray-300 pt-10">
+    <section className="study-result">
       <h3 ref={headingRef} tabIndex={-1}
-        className="mb-6 flex items-center justify-center gap-2 text-2xl font-bold text-gray-800">
-        <BookOpenIcon aria-hidden="true" className="h-7 w-7" />
+        className="study-result-title">
+        <BookOpenIcon aria-hidden="true" className="h-5 w-5" />
         Quiz
       </h3>
       <div className="flex flex-col items-center gap-6">
@@ -99,7 +99,7 @@ export default function QuizList({ quiz }) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           {navigation}
           <button type="button" aria-label="Open quiz focus mode" aria-haspopup="dialog"
-            className="cursor-pointer rounded-lg bg-lime-900 p-3 text-white hover:bg-lime-950"
+            className="cursor-pointer rounded-lg border border-rule-strong bg-sage-paper p-3 text-accent-ink hover:bg-accent-tint"
             onClick={() => setFocusMode(true)}>
             <ArrowsPointingOutIcon aria-hidden="true" className="h-5 w-5" />
           </button>
@@ -107,9 +107,9 @@ export default function QuizList({ quiz }) {
       </div>
       {showScore && (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-          <p role="status" className="text-xl font-bold text-gray-800">Your Score: {score} / {quiz.length}</p>
+          <p role="status" className="text-lg font-semibold text-ink">Your Score: {score} / {quiz.length}</p>
           <button type="button" onClick={reset}
-            className="flex cursor-pointer items-center gap-2 rounded-lg bg-gray-700 px-4 py-2 text-white hover:bg-gray-900">
+            className="editorial-secondary-button">
             <ArrowPathIcon aria-hidden="true" className="h-5 w-5" />
             Reset Quiz
           </button>
@@ -118,7 +118,7 @@ export default function QuizList({ quiz }) {
       {focusMode && (
         <StudyDialog title="Quiz focus mode" onDismiss={() => setFocusMode(false)} className="w-full sm:w-[44rem]">
           <button type="button" data-initial-focus onClick={() => setFocusMode(false)}
-            className="mb-4 cursor-pointer rounded-lg bg-gray-200 px-3 py-2 hover:bg-gray-300">
+            className="editorial-secondary-button mb-4">
             Close focus mode
           </button>
           <div className="flex flex-col items-center gap-4">{view}{navigation}</div>

@@ -23,9 +23,9 @@ export default function StudyDialog({ title, onDismiss, children, className = ""
         event.preventDefault();
         onDismiss();
       }}
-      className={`m-auto max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl bg-white p-4 text-gray-900 shadow-lg sm:p-6 backdrop:bg-black/60 backdrop:backdrop-blur-lg ${className}`}
+      className={`m-auto max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] overflow-y-auto rounded-xl border border-rule-strong bg-paper p-5 text-ink shadow-paper sm:p-7 backdrop:bg-ink/55 ${className}`}
     >
-      <h3 id={titleId} className="mb-4 text-center text-lg font-semibold">{title}</h3>
+      <h3 id={titleId} className="mb-5 text-center font-editorial text-2xl leading-tight">{title}</h3>
       {children}
     </dialog>
   );
